@@ -1,0 +1,2074 @@
+aof.c:413:    /* Don't fsync if no-appendfsync-on-rewrite is set to yes and there are
+aof.c:426:        latencyAddSampleIfNeeded("aof-fsync-always",latency);
+aof.c:557:    c->fd = -1;
+aof.c:558:    c->name = NULL;
+aof.c:559:    c->querybuf = sdsempty();
+aof.c:560:    c->querybuf_peak = 0;
+aof.c:561:    c->argc = 0;
+aof.c:562:    c->argv = NULL;
+aof.c:563:    c->bufpos = 0;
+aof.c:564:    c->flags = 0;
+aof.c:565:    c->btype = REDIS_BLOCKED_NONE;
+aof.c:568:    c->replstate = REDIS_REPL_WAIT_BGSAVE_START;
+aof.c:569:    c->reply = listCreate();
+aof.c:570:    c->reply_bytes = 0;
+aof.c:571:    c->obuf_soft_limit_reached_time = 0;
+aof.c:572:    c->watched_keys = listCreate();
+aof.c:573:    c->peerid = NULL;
+aof.c:574:    listSetFreeMethod(c->reply,decrRefCountVoid);
+aof.c:575:    listSetDupMethod(c->reply,dupClientReplyValue);
+aof.c:583:    for (j = 0; j < c->argc; j++)
+aof.c:584:        decrRefCount(c->argv[j]);
+aof.c:585:    zfree(c->argv);
+aof.c:589:    sdsfree(c->querybuf);
+aof.c:590:    listRelease(c->reply);
+aof.c:591:    listRelease(c->watched_keys);
+bitops.c:220:    if (getBitOffsetFromArgument(c,c->argv[2],&bitoffset) != REDIS_OK)
+bitops.c:223:    if (getLongFromObjectOrReply(c,c->argv[3],&on,err) != REDIS_OK)
+bitops.c:232:    o = lookupKeyWrite(c->db,c->argv[1]);
+bitops.c:235:        dbAdd(c->db,c->argv[1],o);
+bitops.c:238:        o = dbUnshareStringValue(c->db,c->argv[1],o);
+bitops.c:254:    signalModifiedKey(c->db,c->argv[1]);
+bitops.c:255:    notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"setbit",c->argv[1],c->db->id);
+bitops.c:268:    if (getBitOffsetFromArgument(c,c->argv[2],&bitoffset) != REDIS_OK)
+bitops.c:271:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
+bitops.c:289:    char *opname = c->argv[1]->ptr;
+bitops.c:290:    robj *o, *targetkey = c->argv[2];
+bitops.c:314:    if (op == BITOP_NOT && c->argc != 4) {
+bitops.c:320:    numkeys = c->argc - 3;
+bitops.c:325:        o = lookupKeyRead(c->db,c->argv[j+3]);
+bitops.c:450:        setKey(c->db,targetkey,o);
+bitops.c:451:        notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"set",targetkey,c->db->id);
+bitops.c:453:    } else if (dbDelete(c->db,targetkey)) {
+bitops.c:454:        signalModifiedKey(c->db,targetkey);
+bitops.c:455:        notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",targetkey,c->db->id);
+bitops.c:469:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
+bitops.c:483:    if (c->argc == 4) {
+bitops.c:484:        if (getLongFromObjectOrReply(c,c->argv[2],&start,NULL) != REDIS_OK)
+bitops.c:486:        if (getLongFromObjectOrReply(c,c->argv[3],&end,NULL) != REDIS_OK)
+bitops.c:494:    } else if (c->argc == 2) {
+bitops.c:525:    if (getLongFromObjectOrReply(c,c->argv[2],&bit,NULL) != REDIS_OK)
+bitops.c:535:    if ((o = lookupKeyRead(c->db,c->argv[1])) == NULL) {
+bitops.c:552:    if (c->argc == 4 || c->argc == 5) {
+bitops.c:553:        if (getLongFromObjectOrReply(c,c->argv[3],&start,NULL) != REDIS_OK)
+bitops.c:555:        if (c->argc == 5) {
+bitops.c:556:            if (getLongFromObjectOrReply(c,c->argv[4],&end,NULL) != REDIS_OK)
+bitops.c:568:    } else if (c->argc == 3) {
+blocked.c:101:    c->flags |= REDIS_BLOCKED;
+blocked.c:102:    c->btype = btype;
+blocked.c:118:        c->flags &= ~REDIS_UNBLOCKED;
+blocked.c:121:        if (c->querybuf && sdslen(c->querybuf) > 0) {
+blocked.c:132:    if (c->btype == REDIS_BLOCKED_LIST) {
+blocked.c:134:    } else if (c->btype == REDIS_BLOCKED_WAIT) {
+blocked.c:141:    c->flags &= ~REDIS_BLOCKED;
+blocked.c:142:    c->flags |= REDIS_UNBLOCKED;
+blocked.c:143:    c->btype = REDIS_BLOCKED_NONE;
+blocked.c:151:    if (c->btype == REDIS_BLOCKED_LIST) {
+blocked.c:153:    } else if (c->btype == REDIS_BLOCKED_WAIT) {
+blocked.c:154:        addReplyLongLong(c,replicationCountAcksByOffset(c->bpop.reploffset));
+blocked.c:175:        if (c->flags & REDIS_BLOCKED) {
+blocked.c:180:            c->flags |= REDIS_CLOSE_AFTER_REPLY;
+cluster.c:3839:    if (!strcasecmp(c->argv[1]->ptr,"meet") && c->argc == 4) {
+cluster.c:3842:        if (getLongLongFromObject(c->argv[3], &port) != REDIS_OK) {
+cluster.c:3844:                                (char*)c->argv[3]->ptr);
+cluster.c:3848:        if (clusterStartHandshake(c->argv[2]->ptr,port) == 0 &&
+cluster.c:3852:                            (char*)c->argv[2]->ptr, (char*)c->argv[3]->ptr);
+cluster.c:3856:    } else if (!strcasecmp(c->argv[1]->ptr,"nodes") && c->argc == 2) {
+cluster.c:3864:    } else if (!strcasecmp(c->argv[1]->ptr,"myid") && c->argc == 2) {
+cluster.c:3867:    } else if (!strcasecmp(c->argv[1]->ptr,"slots") && c->argc == 2) {
+cluster.c:3870:    } else if (!strcasecmp(c->argv[1]->ptr,"flushslots") && c->argc == 2) {
+cluster.c:3879:    } else if ((!strcasecmp(c->argv[1]->ptr,"addslots") ||
+cluster.c:3880:               !strcasecmp(c->argv[1]->ptr,"delslots")) && c->argc >= 3)
+cluster.c:3886:        int del = !strcasecmp(c->argv[1]->ptr,"delslots");
+cluster.c:3891:        for (j = 2; j < c->argc; j++) {
+cluster.c:3892:            if ((slot = getSlotOrReply(c,c->argv[j])) == -1) {
+cluster.c:3929:    } else if (!strcasecmp(c->argv[1]->ptr,"setslot") && c->argc >= 4) {
+cluster.c:3942:        if ((slot = getSlotOrReply(c,c->argv[2])) == -1) return;
+cluster.c:3944:        if (!strcasecmp(c->argv[3]->ptr,"migrating") && c->argc == 5) {
+cluster.c:3949:            if ((n = clusterLookupNode(c->argv[4]->ptr)) == NULL) {
+cluster.c:3951:                    (char*)c->argv[4]->ptr);
+cluster.c:3955:        } else if (!strcasecmp(c->argv[3]->ptr,"importing") && c->argc == 5) {
+cluster.c:3961:            if ((n = clusterLookupNode(c->argv[4]->ptr)) == NULL) {
+cluster.c:3963:                    (char*)c->argv[3]->ptr);
+cluster.c:3967:        } else if (!strcasecmp(c->argv[3]->ptr,"stable") && c->argc == 4) {
+cluster.c:3971:        } else if (!strcasecmp(c->argv[3]->ptr,"node") && c->argc == 5) {
+cluster.c:3973:            clusterNode *n = clusterLookupNode(c->argv[4]->ptr);
+cluster.c:3977:                    (char*)c->argv[4]->ptr);
+cluster.c:4026:    } else if (!strcasecmp(c->argv[1]->ptr,"bumpepoch") && c->argc == 2) {
+cluster.c:4033:    } else if (!strcasecmp(c->argv[1]->ptr,"info") && c->argc == 2) {
+cluster.c:4085:    } else if (!strcasecmp(c->argv[1]->ptr,"saveconfig") && c->argc == 2) {
+cluster.c:4093:    } else if (!strcasecmp(c->argv[1]->ptr,"keyslot") && c->argc == 3) {
+cluster.c:4095:        sds key = c->argv[2]->ptr;
+cluster.c:4098:    } else if (!strcasecmp(c->argv[1]->ptr,"countkeysinslot") && c->argc == 3) {
+cluster.c:4102:        if (getLongLongFromObjectOrReply(c,c->argv[2],&slot,NULL) != REDIS_OK)
+cluster.c:4109:    } else if (!strcasecmp(c->argv[1]->ptr,"getkeysinslot") && c->argc == 4) {
+cluster.c:4115:        if (getLongLongFromObjectOrReply(c,c->argv[2],&slot,NULL) != REDIS_OK)
+cluster.c:4117:        if (getLongLongFromObjectOrReply(c,c->argv[3],&maxkeys,NULL)
+cluster.c:4130:    } else if (!strcasecmp(c->argv[1]->ptr,"forget") && c->argc == 3) {
+cluster.c:4132:        clusterNode *n = clusterLookupNode(c->argv[2]->ptr);
+cluster.c:4135:            addReplyErrorFormat(c,"Unknown node %s", (char*)c->argv[2]->ptr);
+cluster.c:4149:    } else if (!strcasecmp(c->argv[1]->ptr,"replicate") && c->argc == 3) {
+cluster.c:4151:        clusterNode *n = clusterLookupNode(c->argv[2]->ptr);
+cluster.c:4155:            addReplyErrorFormat(c,"Unknown node %s", (char*)c->argv[2]->ptr);
+cluster.c:4186:    } else if (!strcasecmp(c->argv[1]->ptr,"slaves") && c->argc == 3) {
+cluster.c:4188:        clusterNode *n = clusterLookupNode(c->argv[2]->ptr);
+cluster.c:4193:            addReplyErrorFormat(c,"Unknown node %s", (char*)c->argv[2]->ptr);
+cluster.c:4208:    } else if (!strcasecmp(c->argv[1]->ptr,"count-failure-reports") &&
+cluster.c:4209:               c->argc == 3)
+cluster.c:4212:        clusterNode *n = clusterLookupNode(c->argv[2]->ptr);
+cluster.c:4215:            addReplyErrorFormat(c,"Unknown node %s", (char*)c->argv[2]->ptr);
+cluster.c:4220:    } else if (!strcasecmp(c->argv[1]->ptr,"failover") &&
+cluster.c:4221:               (c->argc == 2 || c->argc == 3))
+cluster.c:4226:        if (c->argc == 3) {
+cluster.c:4227:            if (!strcasecmp(c->argv[2]->ptr,"force")) {
+cluster.c:4229:            } else if (!strcasecmp(c->argv[2]->ptr,"takeover")) {
+cluster.c:4275:    } else if (!strcasecmp(c->argv[1]->ptr,"set-config-epoch") && c->argc == 3)
+cluster.c:4286:        if (getLongLongFromObjectOrReply(c,c->argv[2],&epoch,NULL) != REDIS_OK)
+cluster.c:4311:    } else if (!strcasecmp(c->argv[1]->ptr,"reset") &&
+cluster.c:4312:               (c->argc == 2 || c->argc == 3))
+cluster.c:4318:        if (c->argc == 3) {
+cluster.c:4319:            if (!strcasecmp(c->argv[2]->ptr,"hard")) {
+cluster.c:4321:            } else if (!strcasecmp(c->argv[2]->ptr,"soft")) {
+cluster.c:4331:        if (nodeIsMaster(myself) && dictSize(c->db->dict) != 0) {
+cluster.c:4409:    if ((o = lookupKeyRead(c->db,c->argv[1])) == NULL) {
+cluster.c:4432:    for (j = 4; j < c->argc; j++) {
+cluster.c:4433:        if (!strcasecmp(c->argv[j]->ptr,"replace")) {
+cluster.c:4442:    if (!replace && lookupKeyWrite(c->db,c->argv[1]) != NULL) {
+cluster.c:4448:    if (getLongLongFromObjectOrReply(c,c->argv[2],&ttl,NULL) != REDIS_OK) {
+cluster.c:4456:    if (verifyDumpPayload(c->argv[3]->ptr,sdslen(c->argv[3]->ptr)) == REDIS_ERR)
+cluster.c:4462:    rioInitWithBuffer(&payload,c->argv[3]->ptr);
+cluster.c:4471:    if (replace) dbDelete(c->db,c->argv[1]);
+cluster.c:4474:    dbAdd(c->db,c->argv[1],obj);
+cluster.c:4475:    if (ttl) setExpire(c->db,c->argv[1],mstime()+ttl);
+cluster.c:4476:    signalModifiedKey(c->db,c->argv[1]);
+cluster.c:4534:    fd = anetTcpNonBlockConnect(server.neterr,c->argv[1]->ptr,
+cluster.c:4535:                                atoi(c->argv[2]->ptr));
+cluster.c:4626:    for (j = 6; j < c->argc; j++) {
+cluster.c:4627:        if (!strcasecmp(c->argv[j]->ptr,"copy")) {
+cluster.c:4629:        } else if (!strcasecmp(c->argv[j]->ptr,"replace")) {
+cluster.c:4631:        } else if (!strcasecmp(c->argv[j]->ptr,"keys")) {
+cluster.c:4632:            if (sdslen(c->argv[3]->ptr) != 0) {
+cluster.c:4639:            num_keys = c->argc - j - 1;
+cluster.c:4648:    if (getLongFromObjectOrReply(c,c->argv[5],&timeout,NULL) != REDIS_OK ||
+cluster.c:4649:        getLongFromObjectOrReply(c,c->argv[4],&dbid,NULL) != REDIS_OK)
+cluster.c:4665:        if ((ov[oi] = lookupKeyRead(c->db,c->argv[first_key+j])) != NULL) {
+cluster.c:4666:            kv[oi] = c->argv[first_key+j];
+cluster.c:4681:    cs = migrateGetSocket(c,c->argv[1],c->argv[2],timeout);
+cluster.c:4699:        expireat = getExpire(c->db,kv[j]);
+cluster.c:4777:                dbDelete(c->db,kv[j]);
+cluster.c:4778:                signalModifiedKey(c->db,kv[j]);
+cluster.c:4830:    if (socket_error) migrateCloseSocket(c->argv[1],c->argv[2]);
+cluster.c:4840:    migrateCloseSocket(c->argv[1],c->argv[2]);
+cluster.c:4873:    c->flags |= REDIS_ASKING;
+cluster.c:4885:    c->flags |= REDIS_READONLY;
+cluster.c:4891:    c->flags &= ~REDIS_READONLY;
+cluster.c:4940:        if (!(c->flags & REDIS_MULTI)) return myself;
+cluster.c:4941:        ms = &c->mstate;
+cluster.c:5054:        (c->flags & REDIS_ASKING || cmd->flags & REDIS_CMD_ASKING))
+cluster.c:5067:    if (c->flags & REDIS_READONLY &&
+cluster.c:5124:    if (c->flags & REDIS_BLOCKED && c->btype == REDIS_BLOCKED_LIST) {
+cluster.c:5134:        di = dictGetIterator(c->bpop.keys);
+config.c:136:            int j, addresses = argc-1;
+config.c:277:        } else if (!strcasecmp(argv[0],"repl-diskless-sync-delay") && argc==2) {
+config.c:280:                err = "repl-diskless-sync-delay can't be negative";
+config.c:340:        } else if (!strcasecmp(argv[0],"no-appendfsync-on-rewrite")
+config.c:540:                err = sentinelHandleConfiguration(argv+1,argc-1);
+config.c:613:    redisAssertWithInfo(c,c->argv[2],sdsEncodedObject(c->argv[2]));
+config.c:614:    redisAssertWithInfo(c,c->argv[3],sdsEncodedObject(c->argv[3]));
+config.c:615:    o = c->argv[3];
+config.c:617:    if (!strcasecmp(c->argv[2]->ptr,"dbfilename")) {
+config.c:624:    } else if (!strcasecmp(c->argv[2]->ptr,"requirepass")) {
+config.c:628:    } else if (!strcasecmp(c->argv[2]->ptr,"masterauth")) {
+config.c:631:    } else if (!strcasecmp(c->argv[2]->ptr,"maxmemory")) {
+config.c:641:    } else if (!strcasecmp(c->argv[2]->ptr,"maxclients")) {
+config.c:667:    } else if (!strcasecmp(c->argv[2]->ptr,"hz")) {
+config.c:672:    } else if (!strcasecmp(c->argv[2]->ptr,"maxmemory-policy")) {
+config.c:688:    } else if (!strcasecmp(c->argv[2]->ptr,"maxmemory-samples")) {
+config.c:692:    } else if (!strcasecmp(c->argv[2]->ptr,"timeout")) {
+config.c:696:    } else if (!strcasecmp(c->argv[2]->ptr,"tcp-keepalive")) {
+config.c:700:    } else if (!strcasecmp(c->argv[2]->ptr,"appendfsync")) {
+config.c:710:    } else if (!strcasecmp(c->argv[2]->ptr,"no-appendfsync-on-rewrite")) {
+config.c:715:    } else if (!strcasecmp(c->argv[2]->ptr,"appendonly")) {
+config.c:728:    } else if (!strcasecmp(c->argv[2]->ptr,"auto-aof-rewrite-percentage")) {
+config.c:731:    } else if (!strcasecmp(c->argv[2]->ptr,"auto-aof-rewrite-min-size")) {
+config.c:734:    } else if (!strcasecmp(c->argv[2]->ptr,"aof-rewrite-incremental-fsync")) {
+config.c:739:    } else if (!strcasecmp(c->argv[2]->ptr,"aof-load-truncated")) {
+config.c:744:    } else if (!strcasecmp(c->argv[2]->ptr,"save")) {
+config.c:778:    } else if (!strcasecmp(c->argv[2]->ptr,"slave-serve-stale-data")) {
+config.c:783:    } else if (!strcasecmp(c->argv[2]->ptr,"slave-read-only")) {
+config.c:788:    } else if (!strcasecmp(c->argv[2]->ptr,"activerehashing")) {
+config.c:793:    } else if (!strcasecmp(c->argv[2]->ptr,"dir")) {
+config.c:798:    } else if (!strcasecmp(c->argv[2]->ptr,"hash-max-ziplist-entries")) {
+config.c:801:    } else if (!strcasecmp(c->argv[2]->ptr,"hash-max-ziplist-value")) {
+config.c:804:    } else if (!strcasecmp(c->argv[2]->ptr,"list-max-ziplist-entries")) {
+config.c:807:    } else if (!strcasecmp(c->argv[2]->ptr,"list-max-ziplist-value")) {
+config.c:810:    } else if (!strcasecmp(c->argv[2]->ptr,"set-max-intset-entries")) {
+config.c:813:    } else if (!strcasecmp(c->argv[2]->ptr,"zset-max-ziplist-entries")) {
+config.c:816:    } else if (!strcasecmp(c->argv[2]->ptr,"zset-max-ziplist-value")) {
+config.c:819:    } else if (!strcasecmp(c->argv[2]->ptr,"hll-sparse-max-bytes")) {
+config.c:822:    } else if (!strcasecmp(c->argv[2]->ptr,"lua-time-limit")) {
+config.c:825:    } else if (!strcasecmp(c->argv[2]->ptr,"slowlog-log-slower-than")) {
+config.c:828:    } else if (!strcasecmp(c->argv[2]->ptr,"slowlog-max-len")) {
+config.c:831:    } else if (!strcasecmp(c->argv[2]->ptr,"latency-monitor-threshold")) {
+config.c:834:    } else if (!strcasecmp(c->argv[2]->ptr,"loglevel")) {
+config.c:846:    } else if (!strcasecmp(c->argv[2]->ptr,"client-output-buffer-limit")) {
+config.c:891:    } else if (!strcasecmp(c->argv[2]->ptr,"stop-writes-on-bgsave-error")) {
+config.c:896:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-ping-slave-period")) {
+config.c:899:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-timeout")) {
+config.c:902:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-backlog-size")) {
+config.c:906:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-backlog-ttl")) {
+config.c:909:    } else if (!strcasecmp(c->argv[2]->ptr,"watchdog-period")) {
+config.c:915:    } else if (!strcasecmp(c->argv[2]->ptr,"rdbcompression")) {
+config.c:920:    } else if (!strcasecmp(c->argv[2]->ptr,"notify-keyspace-events")) {
+config.c:925:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-disable-tcp-nodelay")) {
+config.c:930:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-diskless-sync")) {
+config.c:935:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-diskless-sync-delay")) {
+config.c:939:    } else if (!strcasecmp(c->argv[2]->ptr,"slave-priority")) {
+config.c:943:    } else if (!strcasecmp(c->argv[2]->ptr,"min-slaves-to-write")) {
+config.c:948:    } else if (!strcasecmp(c->argv[2]->ptr,"min-slaves-max-lag")) {
+config.c:953:    } else if (!strcasecmp(c->argv[2]->ptr,"cluster-require-full-coverage")) {
+config.c:958:    } else if (!strcasecmp(c->argv[2]->ptr,"cluster-node-timeout")) {
+config.c:962:    } else if (!strcasecmp(c->argv[2]->ptr,"cluster-migration-barrier")) {
+config.c:966:    } else if (!strcasecmp(c->argv[2]->ptr,"cluster-slave-validity-factor")) {
+config.c:972:            (char*)c->argv[2]->ptr);
+config.c:981:            (char*)c->argv[2]->ptr);
+config.c:1014:    robj *o = c->argv[2];
+config.c:1077:    config_get_numerical_field("repl-diskless-sync-delay",server.repl_diskless_sync_delay);
+config.c:1082:    config_get_bool_field("no-appendfsync-on-rewrite",
+config.c:1827:    rewriteConfigNumericalOption(state,"repl-diskless-sync-delay",server.repl_diskless_sync_delay,REDIS_DEFAULT_REPL_DISKLESS_SYNC_DELAY);
+config.c:1853:    rewriteConfigYesNoOption(state,"no-appendfsync-on-rewrite",server.aof_no_fsync_on_rewrite,REDIS_DEFAULT_AOF_NO_FSYNC_ON_REWRITE);
+config.c:1902:    if (!strcasecmp(c->argv[1]->ptr,"set")) {
+config.c:1903:        if (c->argc != 4) goto badarity;
+config.c:1905:    } else if (!strcasecmp(c->argv[1]->ptr,"get")) {
+config.c:1906:        if (c->argc != 3) goto badarity;
+config.c:1908:    } else if (!strcasecmp(c->argv[1]->ptr,"resetstat")) {
+config.c:1909:        if (c->argc != 2) goto badarity;
+config.c:1913:    } else if (!strcasecmp(c->argv[1]->ptr,"rewrite")) {
+config.c:1914:        if (c->argc != 2) goto badarity;
+config.c:1934:        (char*) c->argv[1]->ptr);
+config.c.orig:136:            int j, addresses = argc-1;
+config.c.orig:277:        } else if (!strcasecmp(argv[0],"repl-diskless-sync-delay") && argc==2) {
+config.c.orig:280:                err = "repl-diskless-sync-delay can't be negative";
+config.c.orig:340:        } else if (!strcasecmp(argv[0],"no-appendfsync-on-rewrite")
+config.c.orig:540:                err = sentinelHandleConfiguration(argv+1,argc-1);
+config.c.orig:613:    redisAssertWithInfo(c,c->argv[2],sdsEncodedObject(c->argv[2]));
+config.c.orig:614:    redisAssertWithInfo(c,c->argv[3],sdsEncodedObject(c->argv[3]));
+config.c.orig:615:    o = c->argv[3];
+config.c.orig:617:    if (!strcasecmp(c->argv[2]->ptr,"dbfilename")) {
+config.c.orig:624:    } else if (!strcasecmp(c->argv[2]->ptr,"requirepass")) {
+config.c.orig:628:    } else if (!strcasecmp(c->argv[2]->ptr,"masterauth")) {
+config.c.orig:631:    } else if (!strcasecmp(c->argv[2]->ptr,"maxmemory")) {
+config.c.orig:641:    } else if (!strcasecmp(c->argv[2]->ptr,"maxclients")) {
+config.c.orig:667:    } else if (!strcasecmp(c->argv[2]->ptr,"hz")) {
+config.c.orig:672:    } else if (!strcasecmp(c->argv[2]->ptr,"maxmemory-policy")) {
+config.c.orig:688:    } else if (!strcasecmp(c->argv[2]->ptr,"maxmemory-samples")) {
+config.c.orig:692:    } else if (!strcasecmp(c->argv[2]->ptr,"timeout")) {
+config.c.orig:696:    } else if (!strcasecmp(c->argv[2]->ptr,"tcp-keepalive")) {
+config.c.orig:700:    } else if (!strcasecmp(c->argv[2]->ptr,"appendfsync")) {
+config.c.orig:710:    } else if (!strcasecmp(c->argv[2]->ptr,"no-appendfsync-on-rewrite")) {
+config.c.orig:715:    } else if (!strcasecmp(c->argv[2]->ptr,"appendonly")) {
+config.c.orig:728:    } else if (!strcasecmp(c->argv[2]->ptr,"auto-aof-rewrite-percentage")) {
+config.c.orig:731:    } else if (!strcasecmp(c->argv[2]->ptr,"auto-aof-rewrite-min-size")) {
+config.c.orig:734:    } else if (!strcasecmp(c->argv[2]->ptr,"aof-rewrite-incremental-fsync")) {
+config.c.orig:739:    } else if (!strcasecmp(c->argv[2]->ptr,"aof-load-truncated")) {
+config.c.orig:744:    } else if (!strcasecmp(c->argv[2]->ptr,"save")) {
+config.c.orig:778:    } else if (!strcasecmp(c->argv[2]->ptr,"slave-serve-stale-data")) {
+config.c.orig:783:    } else if (!strcasecmp(c->argv[2]->ptr,"slave-read-only")) {
+config.c.orig:788:    } else if (!strcasecmp(c->argv[2]->ptr,"activerehashing")) {
+config.c.orig:793:    } else if (!strcasecmp(c->argv[2]->ptr,"dir")) {
+config.c.orig:798:    } else if (!strcasecmp(c->argv[2]->ptr,"hash-max-ziplist-entries")) {
+config.c.orig:801:    } else if (!strcasecmp(c->argv[2]->ptr,"hash-max-ziplist-value")) {
+config.c.orig:804:    } else if (!strcasecmp(c->argv[2]->ptr,"list-max-ziplist-entries")) {
+config.c.orig:807:    } else if (!strcasecmp(c->argv[2]->ptr,"list-max-ziplist-value")) {
+config.c.orig:810:    } else if (!strcasecmp(c->argv[2]->ptr,"set-max-intset-entries")) {
+config.c.orig:813:    } else if (!strcasecmp(c->argv[2]->ptr,"zset-max-ziplist-entries")) {
+config.c.orig:816:    } else if (!strcasecmp(c->argv[2]->ptr,"zset-max-ziplist-value")) {
+config.c.orig:819:    } else if (!strcasecmp(c->argv[2]->ptr,"hll-sparse-max-bytes")) {
+config.c.orig:822:    } else if (!strcasecmp(c->argv[2]->ptr,"lua-time-limit")) {
+config.c.orig:825:    } else if (!strcasecmp(c->argv[2]->ptr,"slowlog-log-slower-than")) {
+config.c.orig:828:    } else if (!strcasecmp(c->argv[2]->ptr,"slowlog-max-len")) {
+config.c.orig:831:    } else if (!strcasecmp(c->argv[2]->ptr,"latency-monitor-threshold")) {
+config.c.orig:834:    } else if (!strcasecmp(c->argv[2]->ptr,"loglevel")) {
+config.c.orig:846:    } else if (!strcasecmp(c->argv[2]->ptr,"client-output-buffer-limit")) {
+config.c.orig:891:    } else if (!strcasecmp(c->argv[2]->ptr,"stop-writes-on-bgsave-error")) {
+config.c.orig:896:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-ping-slave-period")) {
+config.c.orig:899:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-timeout")) {
+config.c.orig:902:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-backlog-size")) {
+config.c.orig:906:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-backlog-ttl")) {
+config.c.orig:909:    } else if (!strcasecmp(c->argv[2]->ptr,"watchdog-period")) {
+config.c.orig:915:    } else if (!strcasecmp(c->argv[2]->ptr,"rdbcompression")) {
+config.c.orig:920:    } else if (!strcasecmp(c->argv[2]->ptr,"notify-keyspace-events")) {
+config.c.orig:925:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-disable-tcp-nodelay")) {
+config.c.orig:930:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-diskless-sync")) {
+config.c.orig:935:    } else if (!strcasecmp(c->argv[2]->ptr,"repl-diskless-sync-delay")) {
+config.c.orig:939:    } else if (!strcasecmp(c->argv[2]->ptr,"slave-priority")) {
+config.c.orig:943:    } else if (!strcasecmp(c->argv[2]->ptr,"min-slaves-to-write")) {
+config.c.orig:948:    } else if (!strcasecmp(c->argv[2]->ptr,"min-slaves-max-lag")) {
+config.c.orig:953:    } else if (!strcasecmp(c->argv[2]->ptr,"cluster-require-full-coverage")) {
+config.c.orig:958:    } else if (!strcasecmp(c->argv[2]->ptr,"cluster-node-timeout")) {
+config.c.orig:962:    } else if (!strcasecmp(c->argv[2]->ptr,"cluster-migration-barrier")) {
+config.c.orig:966:    } else if (!strcasecmp(c->argv[2]->ptr,"cluster-slave-validity-factor")) {
+config.c.orig:972:            (char*)c->argv[2]->ptr);
+config.c.orig:981:            (char*)c->argv[2]->ptr);
+config.c.orig:1014:    robj *o = c->argv[2];
+config.c.orig:1077:    config_get_numerical_field("repl-diskless-sync-delay",server.repl_diskless_sync_delay);
+config.c.orig:1082:    config_get_bool_field("no-appendfsync-on-rewrite",
+config.c.orig:1824:    rewriteConfigNumericalOption(state,"repl-diskless-sync-delay",server.repl_diskless_sync_delay,REDIS_DEFAULT_REPL_DISKLESS_SYNC_DELAY);
+config.c.orig:1847:    rewriteConfigYesNoOption(state,"no-appendfsync-on-rewrite",server.aof_no_fsync_on_rewrite,REDIS_DEFAULT_AOF_NO_FSYNC_ON_REWRITE);
+config.c.orig:1896:    if (!strcasecmp(c->argv[1]->ptr,"set")) {
+config.c.orig:1897:        if (c->argc != 4) goto badarity;
+config.c.orig:1899:    } else if (!strcasecmp(c->argv[1]->ptr,"get")) {
+config.c.orig:1900:        if (c->argc != 3) goto badarity;
+config.c.orig:1902:    } else if (!strcasecmp(c->argv[1]->ptr,"resetstat")) {
+config.c.orig:1903:        if (c->argc != 2) goto badarity;
+config.c.orig:1907:    } else if (!strcasecmp(c->argv[1]->ptr,"rewrite")) {
+config.c.orig:1908:        if (c->argc != 2) goto badarity;
+config.c.orig:1928:        (char*) c->argv[1]->ptr);
+crc16.c:37: * Name                       : "XMODEM", also known as "ZMODEM", "CRC-16/ACORN"
+crc64.c:4: * Name: crc-64-jones
+db.c:41: * C-level DB API
+db.c:78:    robj *o = lookupKeyRead(c->db, key);
+db.c:84:    robj *o = lookupKeyWrite(c->db, key);
+db.c:228:    c->db = &server.db[id];
+db.c:254:    server.dirty += dictSize(c->db->dict);
+db.c:255:    signalFlushedDb(c->db->id);
+db.c:256:    dictEmpty(c->db->dict,NULL);
+db.c:257:    dictEmpty(c->db->expires,NULL);
+db.c:283:    for (j = 1; j < c->argc; j++) {
+db.c:284:        expireIfNeeded(c->db,c->argv[j]);
+db.c:285:        if (dbDelete(c->db,c->argv[j])) {
+db.c:286:            signalModifiedKey(c->db,c->argv[j]);
+db.c:288:                "del",c->argv[j],c->db->id);
+db.c:302:    for (j = 1; j < c->argc; j++) {
+db.c:303:        expireIfNeeded(c->db,c->argv[j]);
+db.c:304:        if (dbExists(c->db,c->argv[j])) count++;
+db.c:312:    if (getLongFromObjectOrReply(c, c->argv[1], &id,
+db.c:330:    if ((key = dbRandomKey(c->db)) == NULL) {
+db.c:342:    sds pattern = c->argv[1]->ptr;
+db.c:347:    di = dictGetSafeIterator(c->db->dict);
+db.c:355:            if (expireIfNeeded(c->db,keyobj) == 0) {
+db.c:445:    while (i < c->argc) {
+db.c:446:        j = c->argc - i;
+db.c:447:        if (!strcasecmp(c->argv[i]->ptr, "count") && j >= 2) {
+db.c:448:            if (getLongFromObjectOrReply(c, c->argv[i+1], &count, NULL)
+db.c:460:        } else if (!strcasecmp(c->argv[i]->ptr, "match") && j >= 2) {
+db.c:461:            pat = c->argv[i+1]->ptr;
+db.c:486:        ht = c->db->dict;
+db.c:564:        if (!filter && o == NULL && expireIfNeeded(c->db, kobj)) filter = 1;
+db.c:607:    if (parseScanCursorOrReply(c,c->argv[1],&cursor) == REDIS_ERR) return;
+db.c:612:    addReplyLongLong(c,dictSize(c->db->dict));
+db.c:623:    o = lookupKeyRead(c->db,c->argv[1]);
+db.c:642:    if (c->argc > 2) {
+db.c:645:    } else if (c->argc == 2) {
+db.c:646:        if (!strcasecmp(c->argv[1]->ptr,"nosave")) {
+db.c:648:        } else if (!strcasecmp(c->argv[1]->ptr,"save")) {
+db.c:672:    if (sdscmp(c->argv[1]->ptr,c->argv[2]->ptr) == 0) {
+db.c:677:    if ((o = lookupKeyWriteOrReply(c,c->argv[1],shared.nokeyerr)) == NULL)
+db.c:681:    expire = getExpire(c->db,c->argv[1]);
+db.c:682:    if (lookupKeyWrite(c->db,c->argv[2]) != NULL) {
+db.c:690:        dbDelete(c->db,c->argv[2]);
+db.c:692:    dbAdd(c->db,c->argv[2],o);
+db.c:693:    if (expire != -1) setExpire(c->db,c->argv[2],expire);
+db.c:694:    dbDelete(c->db,c->argv[1]);
+db.c:695:    signalModifiedKey(c->db,c->argv[1]);
+db.c:696:    signalModifiedKey(c->db,c->argv[2]);
+db.c:698:        c->argv[1],c->db->id);
+db.c:700:        c->argv[2],c->db->id);
+db.c:725:    src = c->db;
+db.c:726:    srcid = c->db->id;
+db.c:728:    if (getLongLongFromObject(c->argv[2],&dbid) == REDIS_ERR ||
+db.c:735:    dst = c->db;
+db.c:746:    o = lookupKeyWrite(c->db,c->argv[1]);
+db.c:751:    expire = getExpire(c->db,c->argv[1]);
+db.c:754:    if (lookupKeyWrite(dst,c->argv[1]) != NULL) {
+db.c:758:    dbAdd(dst,c->argv[1],o);
+db.c:759:    if (expire != -1) setExpire(dst,c->argv[1],expire);
+db.c:763:    dbDelete(src,c->argv[1]);
+db.c:876:    robj *key = c->argv[1], *param = c->argv[2];
+db.c:886:    if (lookupKeyRead(c->db,key) == NULL) {
+db.c:900:        redisAssertWithInfo(c,key,dbDelete(c->db,key));
+db.c:907:        signalModifiedKey(c->db,key);
+db.c:908:        notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",key,c->db->id);
+db.c:912:        setExpire(c->db,key,when);
+db.c:914:        signalModifiedKey(c->db,key);
+db.c:915:        notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"expire",key,c->db->id);
+db.c:941:    if (lookupKeyRead(c->db,c->argv[1]) == NULL) {
+db.c:947:    expire = getExpire(c->db,c->argv[1]);
+db.c:970:    de = dictFind(c->db->dict,c->argv[1]->ptr);
+db.c:974:        if (removeExpire(c->db,c->argv[1])) {
+db.c:1042:    if (num > (argc-3)) {
+db.c:1071:    if (num > (argc-3)) {
+db.c:1149:                num = argc-first;
+debug.c:256:    if (!strcasecmp(c->argv[1]->ptr,"segfault")) {
+debug.c:258:    } else if (!strcasecmp(c->argv[1]->ptr,"oom")) {
+debug.c:262:    } else if (!strcasecmp(c->argv[1]->ptr,"assert")) {
+debug.c:263:        if (c->argc >= 3) c->argv[2] = tryObjectEncoding(c->argv[2]);
+debug.c:264:        redisAssertWithInfo(c,c->argv[0],1 == 2);
+debug.c:265:    } else if (!strcasecmp(c->argv[1]->ptr,"reload")) {
+debug.c:277:    } else if (!strcasecmp(c->argv[1]->ptr,"loadaof")) {
+debug.c:286:    } else if (!strcasecmp(c->argv[1]->ptr,"object") && c->argc == 3) {
+debug.c:291:        if ((de = dictFind(c->db->dict,c->argv[2]->ptr)) == NULL) {
+debug.c:305:    } else if (!strcasecmp(c->argv[1]->ptr,"sdslen") && c->argc == 3) {
+debug.c:310:        if ((de = dictFind(c->db->dict,c->argv[2]->ptr)) == NULL) {
+debug.c:328:    } else if (!strcasecmp(c->argv[1]->ptr,"populate") &&
+debug.c:329:               (c->argc == 3 || c->argc == 4)) {
+debug.c:334:        if (getLongFromObjectOrReply(c, c->argv[2], &keys, NULL) != REDIS_OK)
+debug.c:336:        dictExpand(c->db->dict,keys);
+debug.c:339:                (c->argc == 3) ? "key" : (char*)c->argv[3]->ptr, j);
+debug.c:341:            if (lookupKeyRead(c->db,key) != NULL) {
+debug.c:347:            dbAdd(c->db,key,val);
+debug.c:351:    } else if (!strcasecmp(c->argv[1]->ptr,"digest") && c->argc == 2) {
+debug.c:361:    } else if (!strcasecmp(c->argv[1]->ptr,"sleep") && c->argc == 3) {
+debug.c:362:        double dtime = strtod(c->argv[2]->ptr,NULL);
+debug.c:370:    } else if (!strcasecmp(c->argv[1]->ptr,"set-active-expire") &&
+debug.c:371:               c->argc == 3)
+debug.c:373:        server.active_expire_enabled = atoi(c->argv[2]->ptr);
+debug.c:375:    } else if (!strcasecmp(c->argv[1]->ptr,"error") && c->argc == 3) {
+debug.c:378:        errstr = sdscatsds(errstr,c->argv[2]->ptr);
+debug.c:384:            (char*)c->argv[1]->ptr);
+debug.c:408:    redisLog(REDIS_WARNING,"client->flags = %d", c->flags);
+debug.c:409:    redisLog(REDIS_WARNING,"client->fd = %d", c->fd);
+debug.c:410:    redisLog(REDIS_WARNING,"client->argc = %d", c->argc);
+debug.c:411:    for (j=0; j < c->argc; j++) {
+debug.c:415:        if (c->argv[j]->type == REDIS_STRING && sdsEncodedObject(c->argv[j])) {
+debug.c:416:            arg = (char*) c->argv[j]->ptr;
+debug.c:419:                c->argv[j]->type, c->argv[j]->encoding);
+debug.c:423:            j, arg, c->argv[j]->refcount);
+debug.c:488:    return (void*) uc->uc_mcontext->__ss.__rip;
+debug.c:490:    return (void*) uc->uc_mcontext->__ss.__eip;
+debug.c:492:    return (void*) uc->uc_mcontext->__ss.__srr0;
+debug.c:497:    return (void*) uc->uc_mcontext->__ss.__rip;
+debug.c:499:    return (void*) uc->uc_mcontext->__ss.__eip;
+debug.c:504:    return (void*) uc->uc_mcontext.gregs[14]; /* Linux 32 */
+debug.c:506:    return (void*) uc->uc_mcontext.gregs[16]; /* Linux 64 */
+debug.c:508:    return (void*) uc->uc_mcontext.sc_ip;
+debug.c:542:        (unsigned long) uc->uc_mcontext->__ss.__rax,
+debug.c:543:        (unsigned long) uc->uc_mcontext->__ss.__rbx,
+debug.c:544:        (unsigned long) uc->uc_mcontext->__ss.__rcx,
+debug.c:545:        (unsigned long) uc->uc_mcontext->__ss.__rdx,
+debug.c:546:        (unsigned long) uc->uc_mcontext->__ss.__rdi,
+debug.c:547:        (unsigned long) uc->uc_mcontext->__ss.__rsi,
+debug.c:548:        (unsigned long) uc->uc_mcontext->__ss.__rbp,
+debug.c:549:        (unsigned long) uc->uc_mcontext->__ss.__rsp,
+debug.c:550:        (unsigned long) uc->uc_mcontext->__ss.__r8,
+debug.c:551:        (unsigned long) uc->uc_mcontext->__ss.__r9,
+debug.c:552:        (unsigned long) uc->uc_mcontext->__ss.__r10,
+debug.c:553:        (unsigned long) uc->uc_mcontext->__ss.__r11,
+debug.c:554:        (unsigned long) uc->uc_mcontext->__ss.__r12,
+debug.c:555:        (unsigned long) uc->uc_mcontext->__ss.__r13,
+debug.c:556:        (unsigned long) uc->uc_mcontext->__ss.__r14,
+debug.c:557:        (unsigned long) uc->uc_mcontext->__ss.__r15,
+debug.c:558:        (unsigned long) uc->uc_mcontext->__ss.__rip,
+debug.c:559:        (unsigned long) uc->uc_mcontext->__ss.__rflags,
+debug.c:560:        (unsigned long) uc->uc_mcontext->__ss.__cs,
+debug.c:561:        (unsigned long) uc->uc_mcontext->__ss.__fs,
+debug.c:562:        (unsigned long) uc->uc_mcontext->__ss.__gs
+debug.c:564:    logStackContent((void**)uc->uc_mcontext->__ss.__rsp);
+debug.c:573:        (unsigned long) uc->uc_mcontext->__ss.__eax,
+debug.c:574:        (unsigned long) uc->uc_mcontext->__ss.__ebx,
+debug.c:575:        (unsigned long) uc->uc_mcontext->__ss.__ecx,
+debug.c:576:        (unsigned long) uc->uc_mcontext->__ss.__edx,
+debug.c:577:        (unsigned long) uc->uc_mcontext->__ss.__edi,
+debug.c:578:        (unsigned long) uc->uc_mcontext->__ss.__esi,
+debug.c:579:        (unsigned long) uc->uc_mcontext->__ss.__ebp,
+debug.c:580:        (unsigned long) uc->uc_mcontext->__ss.__esp,
+debug.c:581:        (unsigned long) uc->uc_mcontext->__ss.__ss,
+debug.c:582:        (unsigned long) uc->uc_mcontext->__ss.__eflags,
+debug.c:583:        (unsigned long) uc->uc_mcontext->__ss.__eip,
+debug.c:584:        (unsigned long) uc->uc_mcontext->__ss.__cs,
+debug.c:585:        (unsigned long) uc->uc_mcontext->__ss.__ds,
+debug.c:586:        (unsigned long) uc->uc_mcontext->__ss.__es,
+debug.c:587:        (unsigned long) uc->uc_mcontext->__ss.__fs,
+debug.c:588:        (unsigned long) uc->uc_mcontext->__ss.__gs
+debug.c:590:    logStackContent((void**)uc->uc_mcontext->__ss.__esp);
+debug.c:602:        (unsigned long) uc->uc_mcontext.gregs[11],
+debug.c:603:        (unsigned long) uc->uc_mcontext.gregs[8],
+debug.c:604:        (unsigned long) uc->uc_mcontext.gregs[10],
+debug.c:605:        (unsigned long) uc->uc_mcontext.gregs[9],
+debug.c:606:        (unsigned long) uc->uc_mcontext.gregs[4],
+debug.c:607:        (unsigned long) uc->uc_mcontext.gregs[5],
+debug.c:608:        (unsigned long) uc->uc_mcontext.gregs[6],
+debug.c:609:        (unsigned long) uc->uc_mcontext.gregs[7],
+debug.c:610:        (unsigned long) uc->uc_mcontext.gregs[18],
+debug.c:611:        (unsigned long) uc->uc_mcontext.gregs[17],
+debug.c:612:        (unsigned long) uc->uc_mcontext.gregs[14],
+debug.c:613:        (unsigned long) uc->uc_mcontext.gregs[15],
+debug.c:614:        (unsigned long) uc->uc_mcontext.gregs[3],
+debug.c:615:        (unsigned long) uc->uc_mcontext.gregs[2],
+debug.c:616:        (unsigned long) uc->uc_mcontext.gregs[1],
+debug.c:617:        (unsigned long) uc->uc_mcontext.gregs[0]
+debug.c:619:    logStackContent((void**)uc->uc_mcontext.gregs[7]);
+debug.c:629:        (unsigned long) uc->uc_mcontext.gregs[13],
+debug.c:630:        (unsigned long) uc->uc_mcontext.gregs[11],
+debug.c:631:        (unsigned long) uc->uc_mcontext.gregs[14],
+debug.c:632:        (unsigned long) uc->uc_mcontext.gregs[12],
+debug.c:633:        (unsigned long) uc->uc_mcontext.gregs[8],
+debug.c:634:        (unsigned long) uc->uc_mcontext.gregs[9],
+debug.c:635:        (unsigned long) uc->uc_mcontext.gregs[10],
+debug.c:636:        (unsigned long) uc->uc_mcontext.gregs[15],
+debug.c:637:        (unsigned long) uc->uc_mcontext.gregs[0],
+debug.c:638:        (unsigned long) uc->uc_mcontext.gregs[1],
+debug.c:639:        (unsigned long) uc->uc_mcontext.gregs[2],
+debug.c:640:        (unsigned long) uc->uc_mcontext.gregs[3],
+debug.c:641:        (unsigned long) uc->uc_mcontext.gregs[4],
+debug.c:642:        (unsigned long) uc->uc_mcontext.gregs[5],
+debug.c:643:        (unsigned long) uc->uc_mcontext.gregs[6],
+debug.c:644:        (unsigned long) uc->uc_mcontext.gregs[7],
+debug.c:645:        (unsigned long) uc->uc_mcontext.gregs[16],
+debug.c:646:        (unsigned long) uc->uc_mcontext.gregs[17],
+debug.c:647:        (unsigned long) uc->uc_mcontext.gregs[18]
+debug.c:649:    logStackContent((void**)uc->uc_mcontext.gregs[15]);
+debug.c:698:    for (j = 0; j < cc->argc; j++) {
+debug.c:701:        decoded = getDecodedObject(cc->argv[j]);
+debug.c:707:    if (cc->argc >= 1) {
+debug.c:711:        key = getDecodedObject(cc->argv[1]);
+debug.c:712:        de = dictFind(cc->db->dict, key->ptr);
+hyperloglog.c:1156:    robj *o = lookupKeyWrite(c->db,c->argv[1]);
+hyperloglog.c:1165:        dbAdd(c->db,c->argv[1],o);
+hyperloglog.c:1169:        o = dbUnshareStringValue(c->db,c->argv[1],o);
+hyperloglog.c:1172:    for (j = 2; j < c->argc; j++) {
+hyperloglog.c:1173:        int retval = hllAdd(o, (unsigned char*)c->argv[j]->ptr,
+hyperloglog.c:1174:                               sdslen(c->argv[j]->ptr));
+hyperloglog.c:1186:        signalModifiedKey(c->db,c->argv[1]);
+hyperloglog.c:1187:        notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"pfadd",c->argv[1],c->db->id);
+hyperloglog.c:1204:    if (c->argc > 2) {
+hyperloglog.c:1213:        for (j = 1; j < c->argc; j++) {
+hyperloglog.c:1215:            robj *o = lookupKeyRead(c->db,c->argv[j]);
+hyperloglog.c:1236:    o = lookupKeyRead(c->db,c->argv[1]);
+hyperloglog.c:1243:        o = dbUnshareStringValue(c->db,c->argv[1],o);
+hyperloglog.c:1277:            signalModifiedKey(c->db,c->argv[1]);
+hyperloglog.c:1294:    for (j = 1; j < c->argc; j++) {
+hyperloglog.c:1296:        robj *o = lookupKeyRead(c->db,c->argv[j]);
+hyperloglog.c:1309:    robj *o = lookupKeyWrite(c->db,c->argv[1]);
+hyperloglog.c:1315:        dbAdd(c->db,c->argv[1],o);
+hyperloglog.c:1320:        o = dbUnshareStringValue(c->db,c->argv[1],o);
+hyperloglog.c:1337:    signalModifiedKey(c->db,c->argv[1]);
+hyperloglog.c:1340:    notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"pfadd",c->argv[1],c->db->id);
+hyperloglog.c:1456:    char *cmd = c->argv[1]->ptr;
+hyperloglog.c:1461:    o = lookupKeyRead(c->db,c->argv[2]);
+hyperloglog.c:1467:    o = dbUnshareStringValue(c->db,c->argv[2],o);
+hyperloglog.c:1472:        if (c->argc != 3) goto arityerr;
+hyperloglog.c:1493:        if (c->argc != 3) goto arityerr;
+hyperloglog.c:1529:        if (c->argc != 3) goto arityerr;
+hyperloglog.c:1536:        if (c->argc != 3) goto arityerr;
+latency.c:339:        if (!strcasecmp(event,"aof-fsync-always")) {
+latency.c:420:            "  4) Check with 'redis-cli --intrinsic-latency 100' what is the intrinsic latency in your system.\n"
+latency.c:442:            report = sdscat(report,"- Assuming from the point of view of data safety this is viable in your environment, you could try to enable the 'no-appendfsync-on-rewrite' option, so that fsync will not be performed while there is a child rewriting the AOF file or producing an RDB file (the moment where there is high disk contention).\n");
+latency.c:570:    if (!strcasecmp(c->argv[1]->ptr,"history") && c->argc == 3) {
+latency.c:572:        ts = dictFetchValue(server.latency_events,c->argv[2]->ptr);
+latency.c:578:    } else if (!strcasecmp(c->argv[1]->ptr,"graph") && c->argc == 3) {
+latency.c:584:        de = dictFind(server.latency_events,c->argv[2]->ptr);
+latency.c:592:    } else if (!strcasecmp(c->argv[1]->ptr,"latest") && c->argc == 2) {
+latency.c:595:    } else if (!strcasecmp(c->argv[1]->ptr,"doctor") && c->argc == 2) {
+latency.c:601:    } else if (!strcasecmp(c->argv[1]->ptr,"reset") && c->argc >= 2) {
+latency.c:603:        if (c->argc == 2) {
+latency.c:608:            for (j = 2; j < c->argc; j++)
+latency.c:609:                resets += latencyResetEvent(c->argv[j]->ptr);
+latency.c:621:        "No samples available for event '%s'", (char*) c->argv[2]->ptr);
+multi.c:36:    c->mstate.commands = NULL;
+multi.c:37:    c->mstate.count = 0;
+multi.c:44:    for (j = 0; j < c->mstate.count; j++) {
+multi.c:46:        multiCmd *mc = c->mstate.commands+j;
+multi.c:48:        for (i = 0; i < mc->argc; i++)
+multi.c:49:            decrRefCount(mc->argv[i]);
+multi.c:50:        zfree(mc->argv);
+multi.c:52:    zfree(c->mstate.commands);
+multi.c:60:    c->mstate.commands = zrealloc(c->mstate.commands,
+multi.c:61:            sizeof(multiCmd)*(c->mstate.count+1));
+multi.c:62:    mc = c->mstate.commands+c->mstate.count;
+multi.c:63:    mc->cmd = c->cmd;
+multi.c:64:    mc->argc = c->argc;
+multi.c:65:    mc->argv = zmalloc(sizeof(robj*)*c->argc);
+multi.c:66:    memcpy(mc->argv,c->argv,sizeof(robj*)*c->argc);
+multi.c:67:    for (j = 0; j < c->argc; j++)
+multi.c:68:        incrRefCount(mc->argv[j]);
+multi.c:69:    c->mstate.count++;
+multi.c:75:    c->flags &= ~(REDIS_MULTI|REDIS_DIRTY_CAS|REDIS_DIRTY_EXEC);
+multi.c:82:    if (c->flags & REDIS_MULTI)
+multi.c:83:        c->flags |= REDIS_DIRTY_EXEC;
+multi.c:87:    if (c->flags & REDIS_MULTI) {
+multi.c:91:    c->flags |= REDIS_MULTI;
+multi.c:96:    if (!(c->flags & REDIS_MULTI)) {
+multi.c:109:    propagate(server.multiCommand,c->db->id,&multistring,1,
+multi.c:121:    if (!(c->flags & REDIS_MULTI)) {
+multi.c:132:    if (c->flags & (REDIS_DIRTY_CAS|REDIS_DIRTY_EXEC)) {
+multi.c:133:        addReply(c, c->flags & REDIS_DIRTY_EXEC ? shared.execaborterr :
+multi.c:141:    orig_argv = c->argv;
+multi.c:142:    orig_argc = c->argc;
+multi.c:143:    orig_cmd = c->cmd;
+multi.c:144:    addReplyMultiBulkLen(c,c->mstate.count);
+multi.c:145:    for (j = 0; j < c->mstate.count; j++) {
+multi.c:146:        c->argc = c->mstate.commands[j].argc;
+multi.c:147:        c->argv = c->mstate.commands[j].argv;
+multi.c:148:        c->cmd = c->mstate.commands[j].cmd;
+multi.c:154:        if (!must_propagate && !(c->cmd->flags & REDIS_CMD_READONLY)) {
+multi.c:162:        c->mstate.commands[j].argc = c->argc;
+multi.c:163:        c->mstate.commands[j].argv = c->argv;
+multi.c:164:        c->mstate.commands[j].cmd = c->cmd;
+multi.c:166:    c->argv = orig_argv;
+multi.c:167:    c->argc = orig_argc;
+multi.c:168:    c->cmd = orig_cmd;
+multi.c:181:        replicationFeedMonitors(c,server.monitors,c->db->id,c->argv,c->argc);
+multi.c:209:    listRewind(c->watched_keys,&li);
+multi.c:212:        if (wk->db == c->db && equalStringObjects(key,wk->key))
+multi.c:216:    clients = dictFetchValue(c->db->watched_keys,key);
+multi.c:219:        dictAdd(c->db->watched_keys,key,clients);
+multi.c:226:    wk->db = c->db;
+multi.c:228:    listAddNodeTail(c->watched_keys,wk);
+multi.c:237:    if (listLength(c->watched_keys) == 0) return;
+multi.c:238:    listRewind(c->watched_keys,&li);
+multi.c:253:        listDelNode(c->watched_keys,ln);
+multi.c:276:        c->flags |= REDIS_DIRTY_CAS;
+multi.c:292:        listRewind(c->watched_keys,&li2);
+multi.c:301:                    c->flags |= REDIS_DIRTY_CAS;
+multi.c:310:    if (c->flags & REDIS_MULTI) {
+multi.c:314:    for (j = 1; j < c->argc; j++)
+multi.c:315:        watchForKey(c,c->argv[j]);
+multi.c:321:    c->flags &= (~REDIS_DIRTY_CAS);
+networking.c:86:    c->id = server.next_client_id++;
+networking.c:87:    c->fd = fd;
+networking.c:88:    c->name = NULL;
+networking.c:89:    c->bufpos = 0;
+networking.c:90:    c->querybuf = sdsempty();
+networking.c:91:    c->querybuf_peak = 0;
+networking.c:92:    c->reqtype = 0;
+networking.c:93:    c->argc = 0;
+networking.c:94:    c->argv = NULL;
+networking.c:95:    c->cmd = c->lastcmd = NULL;
+networking.c:96:    c->multibulklen = 0;
+networking.c:97:    c->bulklen = -1;
+networking.c:98:    c->sentlen = 0;
+networking.c:99:    c->flags = 0;
+networking.c:100:    c->ctime = c->lastinteraction = server.unixtime;
+networking.c:101:    c->authenticated = 0;
+networking.c:102:    c->replstate = REDIS_REPL_NONE;
+networking.c:103:    c->repl_put_online_on_ack = 0;
+networking.c:104:    c->reploff = 0;
+networking.c:105:    c->repl_ack_off = 0;
+networking.c:106:    c->repl_ack_time = 0;
+networking.c:107:    c->slave_listening_port = 0;
+networking.c:108:    c->slave_capa = SLAVE_CAPA_NONE;
+networking.c:109:    c->reply = listCreate();
+networking.c:110:    c->reply_bytes = 0;
+networking.c:111:    c->obuf_soft_limit_reached_time = 0;
+networking.c:112:    listSetFreeMethod(c->reply,decrRefCountVoid);
+networking.c:113:    listSetDupMethod(c->reply,dupClientReplyValue);
+networking.c:114:    c->btype = REDIS_BLOCKED_NONE;
+networking.c:115:    c->bpop.timeout = 0;
+networking.c:116:    c->bpop.keys = dictCreate(&setDictType,NULL);
+networking.c:117:    c->bpop.target = NULL;
+networking.c:118:    c->bpop.numreplicas = 0;
+networking.c:119:    c->bpop.reploffset = 0;
+networking.c:120:    c->woff = 0;
+networking.c:121:    c->watched_keys = listCreate();
+networking.c:122:    c->pubsub_channels = dictCreate(&setDictType,NULL);
+networking.c:123:    c->pubsub_patterns = listCreate();
+networking.c:124:    c->peerid = NULL;
+networking.c:125:    listSetFreeMethod(c->pubsub_patterns,decrRefCountVoid);
+networking.c:126:    listSetMatchMethod(c->pubsub_patterns,listMatchObjects);
+networking.c:157:    if (c->flags & REDIS_LUA_CLIENT) return REDIS_OK;
+networking.c:161:    if ((c->flags & REDIS_MASTER) &&
+networking.c:162:        !(c->flags & REDIS_MASTER_FORCE_REPLY)) return REDIS_ERR;
+networking.c:164:    if (c->fd <= 0) return REDIS_ERR; /* Fake client for AOF loading. */
+networking.c:168:    if (c->bufpos == 0 && listLength(c->reply) == 0 &&
+networking.c:169:        (c->replstate == REDIS_REPL_NONE ||
+networking.c:170:         (c->replstate == REDIS_REPL_ONLINE && !c->repl_put_online_on_ack)))
+networking.c:173:        if (aeCreateFileEvent(server.el, c->fd, AE_WRITABLE,
+networking.c:206:    size_t available = sizeof(c->buf)-c->bufpos;
+networking.c:208:    if (c->flags & REDIS_CLOSE_AFTER_REPLY) return REDIS_OK;
+networking.c:212:    if (listLength(c->reply) > 0) return REDIS_ERR;
+networking.c:217:    memcpy(c->buf+c->bufpos,s,len);
+networking.c:218:    c->bufpos+=len;
+networking.c:225:    if (c->flags & REDIS_CLOSE_AFTER_REPLY) return;
+networking.c:227:    if (listLength(c->reply) == 0) {
+networking.c:229:        listAddNodeTail(c->reply,o);
+networking.c:230:        c->reply_bytes += getStringObjectSdsUsedMemory(o);
+networking.c:232:        tail = listNodeValue(listLast(c->reply));
+networking.c:239:            c->reply_bytes -= zmalloc_size_sds(tail->ptr);
+networking.c:240:            tail = dupLastObjectIfNeeded(c->reply);
+networking.c:242:            c->reply_bytes += zmalloc_size_sds(tail->ptr);
+networking.c:245:            listAddNodeTail(c->reply,o);
+networking.c:246:            c->reply_bytes += getStringObjectSdsUsedMemory(o);
+networking.c:257:    if (c->flags & REDIS_CLOSE_AFTER_REPLY) {
+networking.c:262:    if (listLength(c->reply) == 0) {
+networking.c:263:        listAddNodeTail(c->reply,createObject(REDIS_STRING,s));
+networking.c:264:        c->reply_bytes += zmalloc_size_sds(s);
+networking.c:266:        tail = listNodeValue(listLast(c->reply));
+networking.c:272:            c->reply_bytes -= zmalloc_size_sds(tail->ptr);
+networking.c:273:            tail = dupLastObjectIfNeeded(c->reply);
+networking.c:275:            c->reply_bytes += zmalloc_size_sds(tail->ptr);
+networking.c:278:            listAddNodeTail(c->reply,createObject(REDIS_STRING,s));
+networking.c:279:            c->reply_bytes += zmalloc_size_sds(s);
+networking.c:288:    if (c->flags & REDIS_CLOSE_AFTER_REPLY) return;
+networking.c:290:    if (listLength(c->reply) == 0) {
+networking.c:293:        listAddNodeTail(c->reply,o);
+networking.c:294:        c->reply_bytes += getStringObjectSdsUsedMemory(o);
+networking.c:296:        tail = listNodeValue(listLast(c->reply));
+networking.c:302:            c->reply_bytes -= zmalloc_size_sds(tail->ptr);
+networking.c:303:            tail = dupLastObjectIfNeeded(c->reply);
+networking.c:305:            c->reply_bytes += zmalloc_size_sds(tail->ptr);
+networking.c:309:            listAddNodeTail(c->reply,o);
+networking.c:310:            c->reply_bytes += getStringObjectSdsUsedMemory(o);
+networking.c:338:        if (listLength(c->reply) == 0 && (sizeof(c->buf) - c->bufpos) >= 32) {
+networking.c:429:    listAddNodeTail(c->reply,createObject(REDIS_STRING,NULL));
+networking.c:430:    return listLast(c->reply);
+networking.c:444:    c->reply_bytes += zmalloc_size_sds(len->ptr);
+networking.c:450:            c->reply_bytes -= zmalloc_size_sds(len->ptr);
+networking.c:451:            c->reply_bytes -= getStringObjectSdsUsedMemory(next);
+networking.c:453:            c->reply_bytes += zmalloc_size_sds(len->ptr);
+networking.c:454:            listDelNode(c->reply,ln->next);
+networking.c:578:    dst->reply = listDup(src->reply);
+networking.c:579:    memcpy(dst->buf,src->buf,src->bufpos);
+networking.c:580:    dst->bufpos = src->bufpos;
+networking.c:581:    dst->reply_bytes = src->reply_bytes;
+networking.c:602:        if (write(c->fd,err,strlen(err)) == -1) {
+networking.c:610:    c->flags |= flags;
+networking.c:654:    for (j = 0; j < c->argc; j++)
+networking.c:655:        decrRefCount(c->argv[j]);
+networking.c:656:    c->argc = 0;
+networking.c:657:    c->cmd = NULL;
+networking.c:681:    if (server.master && c->flags & REDIS_MASTER) {
+networking.c:683:        if (!(c->flags & (REDIS_CLOSE_AFTER_REPLY|
+networking.c:694:    if ((c->flags & REDIS_SLAVE) && !(c->flags & REDIS_MONITOR)) {
+networking.c:700:    sdsfree(c->querybuf);
+networking.c:701:    c->querybuf = NULL;
+networking.c:704:    if (c->flags & REDIS_BLOCKED) unblockClient(c);
+networking.c:705:    dictRelease(c->bpop.keys);
+networking.c:709:    listRelease(c->watched_keys);
+networking.c:714:    dictRelease(c->pubsub_channels);
+networking.c:715:    listRelease(c->pubsub_patterns);
+networking.c:719:    if (c->fd != -1) {
+networking.c:720:        aeDeleteFileEvent(server.el,c->fd,AE_READABLE);
+networking.c:721:        aeDeleteFileEvent(server.el,c->fd,AE_WRITABLE);
+networking.c:722:        close(c->fd);
+networking.c:724:    listRelease(c->reply);
+networking.c:728:    if (c->fd != -1) {
+networking.c:736:    if (c->flags & REDIS_UNBLOCKED) {
+networking.c:744:    if (c->flags & REDIS_SLAVE) {
+networking.c:745:        if (c->replstate == REDIS_REPL_SEND_BULK) {
+networking.c:746:            if (c->repldbfd != -1) close(c->repldbfd);
+networking.c:747:            if (c->replpreamble) sdsfree(c->replpreamble);
+networking.c:749:        list *l = (c->flags & REDIS_MONITOR) ? server.monitors : server.slaves;
+networking.c:756:        if (c->flags & REDIS_SLAVE && listLength(server.slaves) == 0)
+networking.c:763:    if (c->flags & REDIS_MASTER) replicationHandleMasterDisconnection();
+networking.c:767:    if (c->flags & REDIS_CLOSE_ASAP) {
+networking.c:775:    if (c->name) decrRefCount(c->name);
+networking.c:776:    zfree(c->argv);
+networking.c:778:    sdsfree(c->peerid);
+networking.c:787:    if (c->flags & REDIS_CLOSE_ASAP || c->flags & REDIS_LUA_CLIENT) return;
+networking.c:788:    c->flags |= REDIS_CLOSE_ASAP;
+networking.c:797:        c->flags &= ~REDIS_CLOSE_ASAP;
+networking.c:811:    while(c->bufpos > 0 || listLength(c->reply)) {
+networking.c:812:        if (c->bufpos > 0) {
+networking.c:813:            nwritten = write(fd,c->buf+c->sentlen,c->bufpos-c->sentlen);
+networking.c:815:            c->sentlen += nwritten;
+networking.c:820:            if (c->sentlen == c->bufpos) {
+networking.c:821:                c->bufpos = 0;
+networking.c:822:                c->sentlen = 0;
+networking.c:825:            o = listNodeValue(listFirst(c->reply));
+networking.c:830:                listDelNode(c->reply,listFirst(c->reply));
+networking.c:831:                c->reply_bytes -= objmem;
+networking.c:835:            nwritten = write(fd, ((char*)o->ptr)+c->sentlen,objlen-c->sentlen);
+networking.c:837:            c->sentlen += nwritten;
+networking.c:841:            if (c->sentlen == objlen) {
+networking.c:842:                listDelNode(c->reply,listFirst(c->reply));
+networking.c:843:                c->sentlen = 0;
+networking.c:844:                c->reply_bytes -= objmem;
+networking.c:875:        if (!(c->flags & REDIS_MASTER)) c->lastinteraction = server.unixtime;
+networking.c:877:    if (c->bufpos == 0 && listLength(c->reply) == 0) {
+networking.c:878:        c->sentlen = 0;
+networking.c:879:        aeDeleteFileEvent(server.el,c->fd,AE_WRITABLE);
+networking.c:882:        if (c->flags & REDIS_CLOSE_AFTER_REPLY) freeClient(c);
+networking.c:888:    redisCommandProc *prevcmd = c->cmd ? c->cmd->proc : NULL;
+networking.c:891:    c->reqtype = 0;
+networking.c:892:    c->multibulklen = 0;
+networking.c:893:    c->bulklen = -1;
+networking.c:896:    if (!(c->flags & REDIS_MULTI) && prevcmd != askingCommand)
+networking.c:897:        c->flags &= (~REDIS_ASKING);
+networking.c:907:    newline = strchr(c->querybuf,'\n');
+networking.c:911:        if (sdslen(c->querybuf) > REDIS_INLINE_MAX_SIZE) {
+networking.c:919:    if (newline && newline != c->querybuf && *(newline-1) == '\r')
+networking.c:923:    querylen = newline-(c->querybuf);
+networking.c:924:    aux = sdsnewlen(c->querybuf,querylen);
+networking.c:936:    if (querylen == 0 && c->flags & REDIS_SLAVE)
+networking.c:937:        c->repl_ack_time = server.unixtime;
+networking.c:940:    sdsrange(c->querybuf,querylen+2,-1);
+networking.c:944:        if (c->argv) zfree(c->argv);
+networking.c:945:        c->argv = zmalloc(sizeof(robj*)*argc);
+networking.c:949:    for (c->argc = 0, j = 0; j < argc; j++) {
+networking.c:951:            c->argv[c->argc] = createObject(REDIS_STRING,argv[j]);
+networking.c:952:            c->argc++;
+networking.c:970:    c->flags |= REDIS_CLOSE_AFTER_REPLY;
+networking.c:971:    sdsrange(c->querybuf,pos,-1);
+networking.c:979:    if (c->multibulklen == 0) {
+networking.c:981:        redisAssertWithInfo(c,NULL,c->argc == 0);
+networking.c:984:        newline = strchr(c->querybuf,'\r');
+networking.c:986:            if (sdslen(c->querybuf) > REDIS_INLINE_MAX_SIZE) {
+networking.c:994:        if (newline-(c->querybuf) > ((signed)sdslen(c->querybuf)-2))
+networking.c:999:        redisAssertWithInfo(c,NULL,c->querybuf[0] == '*');
+networking.c:1000:        ok = string2ll(c->querybuf+1,newline-(c->querybuf+1),&ll);
+networking.c:1007:        pos = (newline-c->querybuf)+2;
+networking.c:1009:            sdsrange(c->querybuf,pos,-1);
+networking.c:1013:        c->multibulklen = ll;
+networking.c:1016:        if (c->argv) zfree(c->argv);
+networking.c:1017:        c->argv = zmalloc(sizeof(robj*)*c->multibulklen);
+networking.c:1020:    redisAssertWithInfo(c,NULL,c->multibulklen > 0);
+networking.c:1021:    while(c->multibulklen) {
+networking.c:1023:        if (c->bulklen == -1) {
+networking.c:1024:            newline = strchr(c->querybuf+pos,'\r');
+networking.c:1026:                if (sdslen(c->querybuf) > REDIS_INLINE_MAX_SIZE) {
+networking.c:1036:            if (newline-(c->querybuf) > ((signed)sdslen(c->querybuf)-2))
+networking.c:1039:            if (c->querybuf[pos] != '$') {
+networking.c:1042:                    c->querybuf[pos]);
+networking.c:1047:            ok = string2ll(c->querybuf+pos+1,newline-(c->querybuf+pos+1),&ll);
+networking.c:1054:            pos += newline-(c->querybuf+pos)+2;
+networking.c:1059:                 * try to make it likely that it will start at c->querybuf
+networking.c:1062:                sdsrange(c->querybuf,pos,-1);
+networking.c:1064:                qblen = sdslen(c->querybuf);
+networking.c:1068:                    c->querybuf = sdsMakeRoomFor(c->querybuf,ll+2-qblen);
+networking.c:1070:            c->bulklen = ll;
+networking.c:1074:        if (sdslen(c->querybuf)-pos < (unsigned)(c->bulklen+2)) {
+networking.c:1082:                c->bulklen >= REDIS_MBULK_BIG_ARG &&
+networking.c:1083:                (signed) sdslen(c->querybuf) == c->bulklen+2)
+networking.c:1085:                c->argv[c->argc++] = createObject(REDIS_STRING,c->querybuf);
+networking.c:1086:                sdsIncrLen(c->querybuf,-2); /* remove CRLF */
+networking.c:1087:                c->querybuf = sdsempty();
+networking.c:1090:                c->querybuf = sdsMakeRoomFor(c->querybuf,c->bulklen+2);
+networking.c:1093:                c->argv[c->argc++] =
+networking.c:1094:                    createStringObject(c->querybuf+pos,c->bulklen);
+networking.c:1095:                pos += c->bulklen+2;
+networking.c:1097:            c->bulklen = -1;
+networking.c:1098:            c->multibulklen--;
+networking.c:1103:    if (pos) sdsrange(c->querybuf,pos,-1);
+networking.c:1105:    /* We're done when c->multibulk == 0 */
+networking.c:1106:    if (c->multibulklen == 0) return REDIS_OK;
+networking.c:1114:    while(sdslen(c->querybuf)) {
+networking.c:1116:        if (!(c->flags & REDIS_SLAVE) && clientsArePaused()) return;
+networking.c:1119:        if (c->flags & REDIS_BLOCKED) return;
+networking.c:1124:        if (c->flags & REDIS_CLOSE_AFTER_REPLY) return;
+networking.c:1127:        if (!c->reqtype) {
+networking.c:1128:            if (c->querybuf[0] == '*') {
+networking.c:1129:                c->reqtype = REDIS_REQ_MULTIBULK;
+networking.c:1131:                c->reqtype = REDIS_REQ_INLINE;
+networking.c:1135:        if (c->reqtype == REDIS_REQ_INLINE) {
+networking.c:1137:        } else if (c->reqtype == REDIS_REQ_MULTIBULK) {
+networking.c:1144:        if (c->argc == 0) {
+networking.c:1169:    if (c->reqtype == REDIS_REQ_MULTIBULK && c->multibulklen && c->bulklen != -1
+networking.c:1170:        && c->bulklen >= REDIS_MBULK_BIG_ARG)
+networking.c:1172:        int remaining = (unsigned)(c->bulklen+2)-sdslen(c->querybuf);
+networking.c:1177:    qblen = sdslen(c->querybuf);
+networking.c:1178:    if (c->querybuf_peak < qblen) c->querybuf_peak = qblen;
+networking.c:1179:    c->querybuf = sdsMakeRoomFor(c->querybuf, readlen);
+networking.c:1180:    nread = read(fd, c->querybuf+qblen, readlen);
+networking.c:1195:        sdsIncrLen(c->querybuf,nread);
+networking.c:1196:        c->lastinteraction = server.unixtime;
+networking.c:1197:        if (c->flags & REDIS_MASTER) c->reploff += nread;
+networking.c:1203:    if (sdslen(c->querybuf) > server.client_max_querybuf_len) {
+networking.c:1206:        bytes = sdscatrepr(bytes,c->querybuf,64);
+networking.c:1228:        if (listLength(c->reply) > lol) lol = listLength(c->reply);
+networking.c:1229:        if (sdslen(c->querybuf) > bib) bib = sdslen(c->querybuf);
+networking.c:1282:    if (c->peerid == NULL) {
+networking.c:1284:        c->peerid = sdsnew(peerid);
+networking.c:1286:    return c->peerid;
+networking.c:1362:    if (!strcasecmp(c->argv[1]->ptr,"list") && c->argc == 2) {
+networking.c:1367:    } else if (!strcasecmp(c->argv[1]->ptr,"kill")) {
+networking.c:1376:        if (c->argc == 3) {
+networking.c:1378:            addr = c->argv[2]->ptr;
+networking.c:1380:        } else if (c->argc > 3) {
+networking.c:1384:            while(i < c->argc) {
+networking.c:1385:                int moreargs = c->argc > i+1;
+networking.c:1387:                if (!strcasecmp(c->argv[i]->ptr,"id") && moreargs) {
+networking.c:1390:                    if (getLongLongFromObjectOrReply(c,c->argv[i+1],&tmp,NULL)
+networking.c:1393:                } else if (!strcasecmp(c->argv[i]->ptr,"type") && moreargs) {
+networking.c:1394:                    type = getClientTypeByName(c->argv[i+1]->ptr);
+networking.c:1397:                            (char*) c->argv[i+1]->ptr);
+networking.c:1400:                } else if (!strcasecmp(c->argv[i]->ptr,"addr") && moreargs) {
+networking.c:1401:                    addr = c->argv[i+1]->ptr;
+networking.c:1402:                } else if (!strcasecmp(c->argv[i]->ptr,"skipme") && moreargs) {
+networking.c:1403:                    if (!strcasecmp(c->argv[i+1]->ptr,"yes")) {
+networking.c:1405:                    } else if (!strcasecmp(c->argv[i+1]->ptr,"no")) {
+networking.c:1443:        if (c->argc == 3) {
+networking.c:1454:        if (close_this_client) c->flags |= REDIS_CLOSE_AFTER_REPLY;
+networking.c:1455:    } else if (!strcasecmp(c->argv[1]->ptr,"setname") && c->argc == 3) {
+networking.c:1456:        int j, len = sdslen(c->argv[2]->ptr);
+networking.c:1457:        char *p = c->argv[2]->ptr;
+networking.c:1462:            if (c->name) decrRefCount(c->name);
+networking.c:1463:            c->name = NULL;
+networking.c:1479:        if (c->name) decrRefCount(c->name);
+networking.c:1480:        c->name = c->argv[2];
+networking.c:1481:        incrRefCount(c->name);
+networking.c:1483:    } else if (!strcasecmp(c->argv[1]->ptr,"getname") && c->argc == 2) {
+networking.c:1484:        if (c->name)
+networking.c:1485:            addReplyBulk(c,c->name);
+networking.c:1488:    } else if (!strcasecmp(c->argv[1]->ptr,"pause") && c->argc == 3) {
+networking.c:1491:        if (getTimeoutFromObjectOrReply(c,c->argv[2],&duration,UNIT_MILLISECONDS)
+networking.c:1520:    for (j = 0; j < c->argc; j++) decrRefCount(c->argv[j]);
+networking.c:1521:    zfree(c->argv);
+networking.c:1523:    c->argv = argv;
+networking.c:1524:    c->argc = argc;
+networking.c:1525:    c->cmd = lookupCommandOrOriginal(c->argv[0]->ptr);
+networking.c:1526:    redisAssertWithInfo(c,NULL,c->cmd != NULL);
+networking.c:1533:    zfree(c->argv);
+networking.c:1534:    c->argv = argv;
+networking.c:1535:    c->argc = argc;
+networking.c:1536:    c->cmd = lookupCommandOrOriginal(c->argv[0]->ptr);
+networking.c:1537:    redisAssertWithInfo(c,NULL,c->cmd != NULL);
+networking.c:1545: * and c->argc set to the max value. However it's up to the caller to
+networking.c:1549: *    want to end with, it's up to the caller to set c->argc and
+networking.c:1550: *    free the no longer used objects on c->argv. */
+networking.c:1554:    if (i >= c->argc) {
+networking.c:1555:        c->argv = zrealloc(c->argv,sizeof(robj*)*(i+1));
+networking.c:1556:        c->argc = i+1;
+networking.c:1557:        c->argv[i] = NULL;
+networking.c:1559:    oldval = c->argv[i];
+networking.c:1560:    c->argv[i] = newval;
+networking.c:1564:    /* If this is the command name make sure to fix c->cmd. */
+networking.c:1566:        c->cmd = lookupCommandOrOriginal(c->argv[0]->ptr);
+networking.c:1567:        redisAssertWithInfo(c,NULL,c->cmd != NULL);
+networking.c:1587:    return c->reply_bytes + (list_item_size*listLength(c->reply));
+networking.c:1599:    if ((c->flags & REDIS_SLAVE) && !(c->flags & REDIS_MONITOR))
+networking.c:1601:    if (c->flags & REDIS_PUBSUB)
+networking.c:1643:        if (c->obuf_soft_limit_reached_time == 0) {
+networking.c:1644:            c->obuf_soft_limit_reached_time = server.unixtime;
+networking.c:1647:            time_t elapsed = server.unixtime - c->obuf_soft_limit_reached_time;
+networking.c:1657:        c->obuf_soft_limit_reached_time = 0;
+networking.c:1670:    redisAssert(c->reply_bytes < ULONG_MAX-(1024*64));
+networking.c:1671:    if (c->reply_bytes == 0 || c->flags & REDIS_CLOSE_ASAP) return;
+networking.c:1751:            if (c->flags & (REDIS_SLAVE|REDIS_BLOCKED)) continue;
+networking.c:1752:            c->flags |= REDIS_UNBLOCKED;
+object.c:707:    if ((de = dictFind(c->db->dict,key->ptr)) == NULL) return NULL;
+object.c:723:    if (!strcasecmp(c->argv[1]->ptr,"refcount") && c->argc == 3) {
+object.c:724:        if ((o = objectCommandLookupOrReply(c,c->argv[2],shared.nullbulk))
+object.c:727:    } else if (!strcasecmp(c->argv[1]->ptr,"encoding") && c->argc == 3) {
+object.c:728:        if ((o = objectCommandLookupOrReply(c,c->argv[2],shared.nullbulk))
+object.c:731:    } else if (!strcasecmp(c->argv[1]->ptr,"idletime") && c->argc == 3) {
+object.c:732:        if ((o = objectCommandLookupOrReply(c,c->argv[2],shared.nullbulk))
+pubsub.c:52:    return dictSize(c->pubsub_channels)+
+pubsub.c:53:           listLength(c->pubsub_patterns);
+pubsub.c:64:    if (dictAdd(c->pubsub_channels,channel,NULL) == DICT_OK) {
+pubsub.c:97:    if (dictDelete(c->pubsub_channels,channel) == DICT_OK) {
+pubsub.c:118:        addReplyLongLong(c,dictSize(c->pubsub_channels)+
+pubsub.c:119:                       listLength(c->pubsub_patterns));
+pubsub.c:130:    if (listSearchKey(c->pubsub_patterns,pattern) == NULL) {
+pubsub.c:133:        listAddNodeTail(c->pubsub_patterns,pattern);
+pubsub.c:156:    if ((ln = listSearchKey(c->pubsub_patterns,pattern)) != NULL) {
+pubsub.c:158:        listDelNode(c->pubsub_patterns,ln);
+pubsub.c:169:        addReplyLongLong(c,dictSize(c->pubsub_channels)+
+pubsub.c:170:                       listLength(c->pubsub_patterns));
+pubsub.c:179:    dictIterator *di = dictGetSafeIterator(c->pubsub_channels);
+pubsub.c:193:        addReplyLongLong(c,dictSize(c->pubsub_channels)+
+pubsub.c:194:                       listLength(c->pubsub_patterns));
+pubsub.c:207:    listRewind(c->pubsub_patterns,&li);
+pubsub.c:218:        addReplyLongLong(c,dictSize(c->pubsub_channels)+
+pubsub.c:219:                       listLength(c->pubsub_patterns));
+pubsub.c:280:    for (j = 1; j < c->argc; j++)
+pubsub.c:281:        pubsubSubscribeChannel(c,c->argv[j]);
+pubsub.c:282:    c->flags |= REDIS_PUBSUB;
+pubsub.c:286:    if (c->argc == 1) {
+pubsub.c:291:        for (j = 1; j < c->argc; j++)
+pubsub.c:292:            pubsubUnsubscribeChannel(c,c->argv[j],1);
+pubsub.c:294:    if (clientSubscriptionsCount(c) == 0) c->flags &= ~REDIS_PUBSUB;
+pubsub.c:300:    for (j = 1; j < c->argc; j++)
+pubsub.c:301:        pubsubSubscribePattern(c,c->argv[j]);
+pubsub.c:302:    c->flags |= REDIS_PUBSUB;
+pubsub.c:306:    if (c->argc == 1) {
+pubsub.c:311:        for (j = 1; j < c->argc; j++)
+pubsub.c:312:            pubsubUnsubscribePattern(c,c->argv[j],1);
+pubsub.c:314:    if (clientSubscriptionsCount(c) == 0) c->flags &= ~REDIS_PUBSUB;
+pubsub.c:318:    int receivers = pubsubPublishMessage(c->argv[1],c->argv[2]);
+pubsub.c:320:        clusterPropagatePublish(c->argv[1],c->argv[2]);
+pubsub.c:328:    if (!strcasecmp(c->argv[1]->ptr,"channels") &&
+pubsub.c:329:        (c->argc == 2 || c->argc ==3))
+pubsub.c:332:        sds pat = (c->argc == 2) ? NULL : c->argv[2]->ptr;
+pubsub.c:352:    } else if (!strcasecmp(c->argv[1]->ptr,"numsub") && c->argc >= 2) {
+pubsub.c:356:        addReplyMultiBulkLen(c,(c->argc-2)*2);
+pubsub.c:357:        for (j = 2; j < c->argc; j++) {
+pubsub.c:358:            list *l = dictFetchValue(server.pubsub_channels,c->argv[j]);
+pubsub.c:360:            addReplyBulk(c,c->argv[j]);
+pubsub.c:363:    } else if (!strcasecmp(c->argv[1]->ptr,"numpat") && c->argc == 2) {
+pubsub.c:369:            (char*)c->argv[1]->ptr);
+rdb.c:854:                o->ptr = ziplistPush(o->ptr,dec->ptr,sdslen(dec->ptr),REDIS_TAIL);
+rdb.c:1572:    } else if (rdbLoad(c->argv[1]->ptr) == REDIS_OK) {
+rdb.c.orig:854:                o->ptr = ziplistPush(o->ptr,dec->ptr,sdslen(dec->ptr),REDIS_TAIL);
+redis-benchmark.c:126:    aeDeleteFileEvent(config.el,c->context->fd,AE_WRITABLE);
+redis-benchmark.c:127:    aeDeleteFileEvent(config.el,c->context->fd,AE_READABLE);
+redis-benchmark.c:128:    redisFree(c->context);
+redis-benchmark.c:129:    sdsfree(c->obuf);
+redis-benchmark.c:130:    zfree(c->randptr);
+redis-benchmark.c:149:    aeDeleteFileEvent(config.el,c->context->fd,AE_WRITABLE);
+redis-benchmark.c:150:    aeDeleteFileEvent(config.el,c->context->fd,AE_READABLE);
+redis-benchmark.c:151:    aeCreateFileEvent(config.el,c->context->fd,AE_WRITABLE,writeHandler,c);
+redis-benchmark.c:152:    c->written = 0;
+redis-benchmark.c:153:    c->pending = config.pipeline;
+redis-benchmark.c:159:    for (i = 0; i < c->randlen; i++) {
+redis-benchmark.c:160:        char *p = c->randptr[i]+11;
+redis-benchmark.c:198:    if (c->latency < 0) c->latency = ustime()-(c->start);
+redis-benchmark.c:200:    if (redisBufferRead(c->context) != REDIS_OK) {
+redis-benchmark.c:201:        fprintf(stderr,"Error: %s\n",c->context->errstr);
+redis-benchmark.c:204:        while(c->pending) {
+redis-benchmark.c:205:            if (redisGetReply(c->context,&reply) != REDIS_OK) {
+redis-benchmark.c:206:                fprintf(stderr,"Error: %s\n",c->context->errstr);
+redis-benchmark.c:217:                if (c->prefix_pending > 0) {
+redis-benchmark.c:218:                    c->prefix_pending--;
+redis-benchmark.c:219:                    c->pending--;
+redis-benchmark.c:221:                    if (c->prefixlen > 0) {
+redis-benchmark.c:223:                        sdsrange(c->obuf, c->prefixlen, -1);
+redis-benchmark.c:226:                        for (j = 0; j < c->randlen; j++)
+redis-benchmark.c:227:                            c->randptr[j] -= c->prefixlen;
+redis-benchmark.c:228:                        c->prefixlen = 0;
+redis-benchmark.c:234:                    config.latency[config.requests_finished++] = c->latency;
+redis-benchmark.c:235:                c->pending--;
+redis-benchmark.c:236:                if (c->pending == 0) {
+redis-benchmark.c:254:    if (c->written == 0) {
+redis-benchmark.c:263:        c->start = ustime();
+redis-benchmark.c:264:        c->latency = -1;
+redis-benchmark.c:267:    if (sdslen(c->obuf) > c->written) {
+redis-benchmark.c:268:        void *ptr = c->obuf+c->written;
+redis-benchmark.c:269:        int nwritten = write(c->context->fd,ptr,sdslen(c->obuf)-c->written);
+redis-benchmark.c:276:        c->written += nwritten;
+redis-benchmark.c:277:        if (sdslen(c->obuf) == c->written) {
+redis-benchmark.c:278:            aeDeleteFileEvent(config.el,c->context->fd,AE_WRITABLE);
+redis-benchmark.c:279:            aeCreateFileEvent(config.el,c->context->fd,AE_READABLE,readHandler,c);
+redis-benchmark.c:310:        c->context = redisConnectNonBlock(config.hostip,config.hostport);
+redis-benchmark.c:312:        c->context = redisConnectUnixNonBlock(config.hostsocket);
+redis-benchmark.c:314:    if (c->context->err) {
+redis-benchmark.c:317:            fprintf(stderr,"%s:%d: %s\n",config.hostip,config.hostport,c->context->errstr);
+redis-benchmark.c:319:            fprintf(stderr,"%s: %s\n",config.hostsocket,c->context->errstr);
+redis-benchmark.c:323:    c->context->reader->maxbuf = 0;
+redis-benchmark.c:328:    c->obuf = sdsempty();
+redis-benchmark.c:332:    c->prefix_pending = 0;
+redis-benchmark.c:336:        c->obuf = sdscatlen(c->obuf, buf, len);
+redis-benchmark.c:338:        c->prefix_pending++;
+redis-benchmark.c:346:        c->obuf = sdscatprintf(c->obuf,"*2\r\n$6\r\nSELECT\r\n$%d\r\n%s\r\n",
+redis-benchmark.c:348:        c->prefix_pending++;
+redis-benchmark.c:350:    c->prefixlen = sdslen(c->obuf);
+redis-benchmark.c:353:        c->obuf = sdscatlen(c->obuf,
+redis-benchmark.c:358:            c->obuf = sdscatlen(c->obuf,cmd,len);
+redis-benchmark.c:361:    c->written = 0;
+redis-benchmark.c:362:    c->pending = config.pipeline+c->prefix_pending;
+redis-benchmark.c:363:    c->randptr = NULL;
+redis-benchmark.c:364:    c->randlen = 0;
+redis-benchmark.c:369:            c->randlen = from->randlen;
+redis-benchmark.c:370:            c->randfree = 0;
+redis-benchmark.c:371:            c->randptr = zmalloc(sizeof(char*)*c->randlen);
+redis-benchmark.c:373:            for (j = 0; j < (int)c->randlen; j++) {
+redis-benchmark.c:374:                c->randptr[j] = c->obuf + (from->randptr[j]-from->obuf);
+redis-benchmark.c:376:                c->randptr[j] += c->prefixlen - from->prefixlen;
+redis-benchmark.c:379:            char *p = c->obuf;
+redis-benchmark.c:381:            c->randlen = 0;
+redis-benchmark.c:382:            c->randfree = RANDPTR_INITIAL_SIZE;
+redis-benchmark.c:383:            c->randptr = zmalloc(sizeof(char*)*c->randfree);
+redis-benchmark.c:385:                if (c->randfree == 0) {
+redis-benchmark.c:386:                    c->randptr = zrealloc(c->randptr,sizeof(char*)*c->randlen*2);
+redis-benchmark.c:387:                    c->randfree += c->randlen;
+redis-benchmark.c:389:                c->randptr[c->randlen++] = p;
+redis-benchmark.c:390:                c->randfree--;
+redis-benchmark.c:396:        aeCreateFileEvent(config.el,c->context->fd,AE_WRITABLE,writeHandler,c);
+redis-benchmark.c:475:        lastarg = (i == (argc-1));
+redis.c:914:        !(c->flags & REDIS_SLAVE) &&    /* no timeout for slaves */
+redis.c:915:        !(c->flags & REDIS_MASTER) &&   /* no timeout for masters */
+redis.c:916:        !(c->flags & REDIS_BLOCKED) &&  /* no timeout for BLPOP */
+redis.c:917:        !(c->flags & REDIS_PUBSUB) &&   /* no timeout for Pub/Sub clients */
+redis.c:918:        (now - c->lastinteraction > server.maxidletime))
+redis.c:923:    } else if (c->flags & REDIS_BLOCKED) {
+redis.c:928:        if (c->bpop.timeout != 0 && c->bpop.timeout < now_ms) {
+redis.c:947:    size_t querybuf_size = sdsAllocSize(c->querybuf);
+redis.c:948:    time_t idletime = server.unixtime - c->lastinteraction;
+redis.c:954:         (querybuf_size/(c->querybuf_peak+1)) > 2) ||
+redis.c:958:        if (sdsavail(c->querybuf) > 1024) {
+redis.c:959:            c->querybuf = sdsRemoveFreeSpace(c->querybuf);
+redis.c:964:    c->querybuf_peak = 0;
+redis.c:1908:        char *f = c->sflags;
+redis.c:1913:            case 'w': c->flags |= REDIS_CMD_WRITE; break;
+redis.c:1914:            case 'r': c->flags |= REDIS_CMD_READONLY; break;
+redis.c:1915:            case 'm': c->flags |= REDIS_CMD_DENYOOM; break;
+redis.c:1916:            case 'a': c->flags |= REDIS_CMD_ADMIN; break;
+redis.c:1917:            case 'p': c->flags |= REDIS_CMD_PUBSUB; break;
+redis.c:1918:            case 's': c->flags |= REDIS_CMD_NOSCRIPT; break;
+redis.c:1919:            case 'R': c->flags |= REDIS_CMD_RANDOM; break;
+redis.c:1920:            case 'S': c->flags |= REDIS_CMD_SORT_FOR_SCRIPT; break;
+redis.c:1921:            case 'l': c->flags |= REDIS_CMD_LOADING; break;
+redis.c:1922:            case 't': c->flags |= REDIS_CMD_STALE; break;
+redis.c:1923:            case 'M': c->flags |= REDIS_CMD_SKIP_MONITOR; break;
+redis.c:1924:            case 'k': c->flags |= REDIS_CMD_ASKING; break;
+redis.c:1925:            case 'F': c->flags |= REDIS_CMD_FAST; break;
+redis.c:1931:        retval1 = dictAdd(server.commands, sdsnew(c->name), c);
+redis.c:1934:        retval2 = dictAdd(server.orig_commands, sdsnew(c->name), c);
+redis.c:1946:        c->microseconds = 0;
+redis.c:1947:        c->calls = 0;
+redis.c:2046:    if (flags & REDIS_PROPAGATE_REPL) c->flags |= REDIS_FORCE_REPL;
+redis.c:2047:    if (flags & REDIS_PROPAGATE_AOF) c->flags |= REDIS_FORCE_AOF;
+redis.c:2053:    int client_old_flags = c->flags;
+redis.c:2059:        !(c->cmd->flags & (REDIS_CMD_SKIP_MONITOR|REDIS_CMD_ADMIN)))
+redis.c:2061:        replicationFeedMonitors(c,server.monitors,c->db->id,c->argv,c->argc);
+redis.c:2065:    c->flags &= ~(REDIS_FORCE_AOF|REDIS_FORCE_REPL);
+redis.c:2069:    c->cmd->proc(c);
+redis.c:2076:    if (server.loading && c->flags & REDIS_LUA_CLIENT)
+redis.c:2082:    if (c->flags & REDIS_LUA_CLIENT && server.lua_caller) {
+redis.c:2083:        if (c->flags & REDIS_FORCE_REPL)
+redis.c:2085:        if (c->flags & REDIS_FORCE_AOF)
+redis.c:2091:    if (flags & REDIS_CALL_SLOWLOG && c->cmd->proc != execCommand) {
+redis.c:2092:        char *latency_event = (c->cmd->flags & REDIS_CMD_FAST) ?
+redis.c:2095:        slowlogPushEntryIfNeeded(c->argv,c->argc,duration);
+redis.c:2098:        c->cmd->microseconds += duration;
+redis.c:2099:        c->cmd->calls++;
+redis.c:2106:        if (c->flags & REDIS_FORCE_REPL) flags |= REDIS_PROPAGATE_REPL;
+redis.c:2107:        if (c->flags & REDIS_FORCE_AOF) flags |= REDIS_PROPAGATE_AOF;
+redis.c:2111:            propagate(c->cmd,c->db->id,c->argv,c->argc,flags);
+redis.c:2116:    c->flags &= ~(REDIS_FORCE_AOF|REDIS_FORCE_REPL);
+redis.c:2117:    c->flags |= client_old_flags & (REDIS_FORCE_AOF|REDIS_FORCE_REPL);
+redis.c:2147:    if (!strcasecmp(c->argv[0]->ptr,"quit")) {
+redis.c:2149:        c->flags |= REDIS_CLOSE_AFTER_REPLY;
+redis.c:2155:    c->cmd = c->lastcmd = lookupCommand(c->argv[0]->ptr);
+redis.c:2156:    if (!c->cmd) {
+redis.c:2159:            (char*)c->argv[0]->ptr);
+redis.c:2161:    } else if ((c->cmd->arity > 0 && c->cmd->arity != c->argc) ||
+redis.c:2162:               (c->argc < -c->cmd->arity)) {
+redis.c:2165:            c->cmd->name);
+redis.c:2170:    if (server.requirepass && !c->authenticated && c->cmd->proc != authCommand)
+redis.c:2182:        !(c->flags & REDIS_MASTER) &&
+redis.c:2183:        !(c->flags & REDIS_LUA_CLIENT &&
+redis.c:2185:        !(c->cmd->getkeys_proc == NULL && c->cmd->firstkey == 0))
+redis.c:2195:            clusterNode *n = getNodeByQuery(c,c->cmd,c->argv,c->argc,&hashslot,&error_code);
+redis.c:2217:        if ((c->cmd->flags & REDIS_CMD_DENYOOM) && retval == REDIS_ERR) {
+redis.c:2231:        (c->cmd->flags & REDIS_CMD_WRITE ||
+redis.c:2232:         c->cmd->proc == pingCommand))
+redis.c:2250:        c->cmd->flags & REDIS_CMD_WRITE &&
+redis.c:2261:        !(c->flags & REDIS_MASTER) &&
+redis.c:2262:        c->cmd->flags & REDIS_CMD_WRITE)
+redis.c:2269:    if (c->flags & REDIS_PUBSUB &&
+redis.c:2270:        c->cmd->proc != pingCommand &&
+redis.c:2271:        c->cmd->proc != subscribeCommand &&
+redis.c:2272:        c->cmd->proc != unsubscribeCommand &&
+redis.c:2273:        c->cmd->proc != psubscribeCommand &&
+redis.c:2274:        c->cmd->proc != punsubscribeCommand) {
+redis.c:2283:        !(c->cmd->flags & REDIS_CMD_STALE))
+redis.c:2292:    if (server.loading && !(c->cmd->flags & REDIS_CMD_LOADING)) {
+redis.c:2299:          c->cmd->proc != authCommand &&
+redis.c:2300:          c->cmd->proc != replconfCommand &&
+redis.c:2301:        !(c->cmd->proc == shutdownCommand &&
+redis.c:2302:          c->argc == 2 &&
+redis.c:2303:          tolower(((char*)c->argv[1]->ptr)[0]) == 'n') &&
+redis.c:2304:        !(c->cmd->proc == scriptCommand &&
+redis.c:2305:          c->argc == 2 &&
+redis.c:2306:          tolower(((char*)c->argv[1]->ptr)[0]) == 'k'))
+redis.c:2314:    if (c->flags & REDIS_MULTI &&
+redis.c:2315:        c->cmd->proc != execCommand && c->cmd->proc != discardCommand &&
+redis.c:2316:        c->cmd->proc != multiCommand && c->cmd->proc != watchCommand)
+redis.c:2322:        c->woff = server.master_repl_offset;
+redis.c:2448:    } else if (!time_independent_strcmp(c->argv[1]->ptr, server.requirepass)) {
+redis.c:2449:      c->authenticated = 1;
+redis.c:2452:      c->authenticated = 0;
+redis.c:2461:    if (c->argc > 2) {
+redis.c:2463:            c->cmd->name);
+redis.c:2467:    if (c->flags & REDIS_PUBSUB) {
+redis.c:2470:        if (c->argc == 1)
+redis.c:2473:            addReplyBulk(c,c->argv[1]);
+redis.c:2475:        if (c->argc == 1)
+redis.c:2478:            addReplyBulk(c,c->argv[1]);
+redis.c:2483:    addReplyBulk(c,c->argv[1]);
+redis.c:2549:    if (c->argc == 1) {
+redis.c:2556:    } else if (!strcasecmp(c->argv[1]->ptr, "info")) {
+redis.c:2558:        addReplyMultiBulkLen(c, c->argc-2);
+redis.c:2559:        for (i = 2; i < c->argc; i++) {
+redis.c:2560:            addReplyCommand(c, dictFetchValue(server.commands, c->argv[i]->ptr));
+redis.c:2562:    } else if (!strcasecmp(c->argv[1]->ptr, "count") && c->argc == 2) {
+redis.c:2564:    } else if (!strcasecmp(c->argv[1]->ptr,"getkeys") && c->argc >= 3) {
+redis.c:2565:        struct redisCommand *cmd = lookupCommand(c->argv[2]->ptr);
+redis.c:2571:        } else if ((cmd->arity > 0 && cmd->arity != c->argc-2) ||
+redis.c:2572:                   ((c->argc-2) < -cmd->arity))
+redis.c:2578:        keys = getKeysFromCommand(cmd,c->argv+2,c->argc-2,&numkeys);
+redis.c:2580:        for (j = 0; j < numkeys; j++) addReplyBulk(c,c->argv[keys[j]+2]);
+redis.c:3021:            if (!c->calls) continue;
+redis.c:3024:                c->name, c->calls, c->microseconds,
+redis.c:3025:                (c->calls == 0) ? 0 : ((float)c->microseconds/c->calls));
+redis.c:3058:    char *section = c->argc == 2 ? c->argv[1]->ptr : "default";
+redis.c:3060:    if (c->argc > 2) {
+redis.c:3073:    if (c->flags & REDIS_SLAVE) return;
+redis.c:3075:    c->flags |= (REDIS_SLAVE|REDIS_MONITOR);
+redis.c.20170313:913:        !(c->flags & REDIS_SLAVE) &&    /* no timeout for slaves */
+redis.c.20170313:914:        !(c->flags & REDIS_MASTER) &&   /* no timeout for masters */
+redis.c.20170313:915:        !(c->flags & REDIS_BLOCKED) &&  /* no timeout for BLPOP */
+redis.c.20170313:916:        !(c->flags & REDIS_PUBSUB) &&   /* no timeout for Pub/Sub clients */
+redis.c.20170313:917:        (now - c->lastinteraction > server.maxidletime))
+redis.c.20170313:922:    } else if (c->flags & REDIS_BLOCKED) {
+redis.c.20170313:927:        if (c->bpop.timeout != 0 && c->bpop.timeout < now_ms) {
+redis.c.20170313:946:    size_t querybuf_size = sdsAllocSize(c->querybuf);
+redis.c.20170313:947:    time_t idletime = server.unixtime - c->lastinteraction;
+redis.c.20170313:953:         (querybuf_size/(c->querybuf_peak+1)) > 2) ||
+redis.c.20170313:957:        if (sdsavail(c->querybuf) > 1024) {
+redis.c.20170313:958:            c->querybuf = sdsRemoveFreeSpace(c->querybuf);
+redis.c.20170313:963:    c->querybuf_peak = 0;
+redis.c.20170313:1907:        char *f = c->sflags;
+redis.c.20170313:1912:            case 'w': c->flags |= REDIS_CMD_WRITE; break;
+redis.c.20170313:1913:            case 'r': c->flags |= REDIS_CMD_READONLY; break;
+redis.c.20170313:1914:            case 'm': c->flags |= REDIS_CMD_DENYOOM; break;
+redis.c.20170313:1915:            case 'a': c->flags |= REDIS_CMD_ADMIN; break;
+redis.c.20170313:1916:            case 'p': c->flags |= REDIS_CMD_PUBSUB; break;
+redis.c.20170313:1917:            case 's': c->flags |= REDIS_CMD_NOSCRIPT; break;
+redis.c.20170313:1918:            case 'R': c->flags |= REDIS_CMD_RANDOM; break;
+redis.c.20170313:1919:            case 'S': c->flags |= REDIS_CMD_SORT_FOR_SCRIPT; break;
+redis.c.20170313:1920:            case 'l': c->flags |= REDIS_CMD_LOADING; break;
+redis.c.20170313:1921:            case 't': c->flags |= REDIS_CMD_STALE; break;
+redis.c.20170313:1922:            case 'M': c->flags |= REDIS_CMD_SKIP_MONITOR; break;
+redis.c.20170313:1923:            case 'k': c->flags |= REDIS_CMD_ASKING; break;
+redis.c.20170313:1924:            case 'F': c->flags |= REDIS_CMD_FAST; break;
+redis.c.20170313:1930:        retval1 = dictAdd(server.commands, sdsnew(c->name), c);
+redis.c.20170313:1933:        retval2 = dictAdd(server.orig_commands, sdsnew(c->name), c);
+redis.c.20170313:1945:        c->microseconds = 0;
+redis.c.20170313:1946:        c->calls = 0;
+redis.c.20170313:2045:    if (flags & REDIS_PROPAGATE_REPL) c->flags |= REDIS_FORCE_REPL;
+redis.c.20170313:2046:    if (flags & REDIS_PROPAGATE_AOF) c->flags |= REDIS_FORCE_AOF;
+redis.c.20170313:2052:    int client_old_flags = c->flags;
+redis.c.20170313:2058:        !(c->cmd->flags & (REDIS_CMD_SKIP_MONITOR|REDIS_CMD_ADMIN)))
+redis.c.20170313:2060:        replicationFeedMonitors(c,server.monitors,c->db->id,c->argv,c->argc);
+redis.c.20170313:2064:    c->flags &= ~(REDIS_FORCE_AOF|REDIS_FORCE_REPL);
+redis.c.20170313:2068:    c->cmd->proc(c);
+redis.c.20170313:2075:    if (server.loading && c->flags & REDIS_LUA_CLIENT)
+redis.c.20170313:2081:    if (c->flags & REDIS_LUA_CLIENT && server.lua_caller) {
+redis.c.20170313:2082:        if (c->flags & REDIS_FORCE_REPL)
+redis.c.20170313:2084:        if (c->flags & REDIS_FORCE_AOF)
+redis.c.20170313:2090:    if (flags & REDIS_CALL_SLOWLOG && c->cmd->proc != execCommand) {
+redis.c.20170313:2091:        char *latency_event = (c->cmd->flags & REDIS_CMD_FAST) ?
+redis.c.20170313:2094:        slowlogPushEntryIfNeeded(c->argv,c->argc,duration);
+redis.c.20170313:2097:        c->cmd->microseconds += duration;
+redis.c.20170313:2098:        c->cmd->calls++;
+redis.c.20170313:2105:        if (c->flags & REDIS_FORCE_REPL) flags |= REDIS_PROPAGATE_REPL;
+redis.c.20170313:2106:        if (c->flags & REDIS_FORCE_AOF) flags |= REDIS_PROPAGATE_AOF;
+redis.c.20170313:2110:            propagate(c->cmd,c->db->id,c->argv,c->argc,flags);
+redis.c.20170313:2115:    c->flags &= ~(REDIS_FORCE_AOF|REDIS_FORCE_REPL);
+redis.c.20170313:2116:    c->flags |= client_old_flags & (REDIS_FORCE_AOF|REDIS_FORCE_REPL);
+redis.c.20170313:2146:    if (!strcasecmp(c->argv[0]->ptr,"quit")) {
+redis.c.20170313:2148:        c->flags |= REDIS_CLOSE_AFTER_REPLY;
+redis.c.20170313:2154:    c->cmd = c->lastcmd = lookupCommand(c->argv[0]->ptr);
+redis.c.20170313:2155:    if (!c->cmd) {
+redis.c.20170313:2158:            (char*)c->argv[0]->ptr);
+redis.c.20170313:2160:    } else if ((c->cmd->arity > 0 && c->cmd->arity != c->argc) ||
+redis.c.20170313:2161:               (c->argc < -c->cmd->arity)) {
+redis.c.20170313:2164:            c->cmd->name);
+redis.c.20170313:2169:    if (server.requirepass && !c->authenticated && c->cmd->proc != authCommand)
+redis.c.20170313:2181:        !(c->flags & REDIS_MASTER) &&
+redis.c.20170313:2182:        !(c->flags & REDIS_LUA_CLIENT &&
+redis.c.20170313:2184:        !(c->cmd->getkeys_proc == NULL && c->cmd->firstkey == 0))
+redis.c.20170313:2194:            clusterNode *n = getNodeByQuery(c,c->cmd,c->argv,c->argc,&hashslot,&error_code);
+redis.c.20170313:2216:        if ((c->cmd->flags & REDIS_CMD_DENYOOM) && retval == REDIS_ERR) {
+redis.c.20170313:2230:        (c->cmd->flags & REDIS_CMD_WRITE ||
+redis.c.20170313:2231:         c->cmd->proc == pingCommand))
+redis.c.20170313:2249:        c->cmd->flags & REDIS_CMD_WRITE &&
+redis.c.20170313:2260:        !(c->flags & REDIS_MASTER) &&
+redis.c.20170313:2261:        c->cmd->flags & REDIS_CMD_WRITE)
+redis.c.20170313:2268:    if (c->flags & REDIS_PUBSUB &&
+redis.c.20170313:2269:        c->cmd->proc != pingCommand &&
+redis.c.20170313:2270:        c->cmd->proc != subscribeCommand &&
+redis.c.20170313:2271:        c->cmd->proc != unsubscribeCommand &&
+redis.c.20170313:2272:        c->cmd->proc != psubscribeCommand &&
+redis.c.20170313:2273:        c->cmd->proc != punsubscribeCommand) {
+redis.c.20170313:2282:        !(c->cmd->flags & REDIS_CMD_STALE))
+redis.c.20170313:2291:    if (server.loading && !(c->cmd->flags & REDIS_CMD_LOADING)) {
+redis.c.20170313:2298:          c->cmd->proc != authCommand &&
+redis.c.20170313:2299:          c->cmd->proc != replconfCommand &&
+redis.c.20170313:2300:        !(c->cmd->proc == shutdownCommand &&
+redis.c.20170313:2301:          c->argc == 2 &&
+redis.c.20170313:2302:          tolower(((char*)c->argv[1]->ptr)[0]) == 'n') &&
+redis.c.20170313:2303:        !(c->cmd->proc == scriptCommand &&
+redis.c.20170313:2304:          c->argc == 2 &&
+redis.c.20170313:2305:          tolower(((char*)c->argv[1]->ptr)[0]) == 'k'))
+redis.c.20170313:2313:    if (c->flags & REDIS_MULTI &&
+redis.c.20170313:2314:        c->cmd->proc != execCommand && c->cmd->proc != discardCommand &&
+redis.c.20170313:2315:        c->cmd->proc != multiCommand && c->cmd->proc != watchCommand)
+redis.c.20170313:2321:        c->woff = server.master_repl_offset;
+redis.c.20170313:2447:    } else if (!time_independent_strcmp(c->argv[1]->ptr, server.requirepass)) {
+redis.c.20170313:2448:      c->authenticated = 1;
+redis.c.20170313:2451:      c->authenticated = 0;
+redis.c.20170313:2460:    if (c->argc > 2) {
+redis.c.20170313:2462:            c->cmd->name);
+redis.c.20170313:2466:    if (c->flags & REDIS_PUBSUB) {
+redis.c.20170313:2469:        if (c->argc == 1)
+redis.c.20170313:2472:            addReplyBulk(c,c->argv[1]);
+redis.c.20170313:2474:        if (c->argc == 1)
+redis.c.20170313:2477:            addReplyBulk(c,c->argv[1]);
+redis.c.20170313:2482:    addReplyBulk(c,c->argv[1]);
+redis.c.20170313:2548:    if (c->argc == 1) {
+redis.c.20170313:2555:    } else if (!strcasecmp(c->argv[1]->ptr, "info")) {
+redis.c.20170313:2557:        addReplyMultiBulkLen(c, c->argc-2);
+redis.c.20170313:2558:        for (i = 2; i < c->argc; i++) {
+redis.c.20170313:2559:            addReplyCommand(c, dictFetchValue(server.commands, c->argv[i]->ptr));
+redis.c.20170313:2561:    } else if (!strcasecmp(c->argv[1]->ptr, "count") && c->argc == 2) {
+redis.c.20170313:2563:    } else if (!strcasecmp(c->argv[1]->ptr,"getkeys") && c->argc >= 3) {
+redis.c.20170313:2564:        struct redisCommand *cmd = lookupCommand(c->argv[2]->ptr);
+redis.c.20170313:2570:        } else if ((cmd->arity > 0 && cmd->arity != c->argc-2) ||
+redis.c.20170313:2571:                   ((c->argc-2) < -cmd->arity))
+redis.c.20170313:2577:        keys = getKeysFromCommand(cmd,c->argv+2,c->argc-2,&numkeys);
+redis.c.20170313:2579:        for (j = 0; j < numkeys; j++) addReplyBulk(c,c->argv[keys[j]+2]);
+redis.c.20170313:3020:            if (!c->calls) continue;
+redis.c.20170313:3023:                c->name, c->calls, c->microseconds,
+redis.c.20170313:3024:                (c->calls == 0) ? 0 : ((float)c->microseconds/c->calls));
+redis.c.20170313:3057:    char *section = c->argc == 2 ? c->argv[1]->ptr : "default";
+redis.c.20170313:3059:    if (c->argc > 2) {
+redis.c.20170313:3072:    if (c->flags & REDIS_SLAVE) return;
+redis.c.20170313:3074:    c->flags |= (REDIS_SLAVE|REDIS_MONITOR);
+redis-cli.c:722:    assert(!c->err);
+redis-cli.c:724:        while (c->err & (REDIS_ERR_IO | REDIS_ERR_EOF)) {
+redis-cli.c:738:        if (c->err && !(c->err & (REDIS_ERR_IO | REDIS_ERR_EOF))) {
+redis-cli.c:739:            fprintf(stderr, "Error: %s\n", c->errstr);
+redis-cli.c:758:        int lastarg = i==argc-1;
+redis-cli.c:809:        } else if (!strcmp(argv[i],"--intrinsic-latency") && !lastarg) {
+redis-cli.c:902:"  --intrinsic-latency <sec> Run a test to measure intrinsic system latency.\n"
+redis-cli.c:1019:                    issueCommandRepeat(argc-skipargs, argv+skipargs, repeat);
+redis-cli.c:1030:        /* linenoise() returns malloc-ed lines like readline() */
+redis.c.orig:913:        !(c->flags & REDIS_SLAVE) &&    /* no timeout for slaves */
+redis.c.orig:914:        !(c->flags & REDIS_MASTER) &&   /* no timeout for masters */
+redis.c.orig:915:        !(c->flags & REDIS_BLOCKED) &&  /* no timeout for BLPOP */
+redis.c.orig:916:        !(c->flags & REDIS_PUBSUB) &&   /* no timeout for Pub/Sub clients */
+redis.c.orig:917:        (now - c->lastinteraction > server.maxidletime))
+redis.c.orig:922:    } else if (c->flags & REDIS_BLOCKED) {
+redis.c.orig:927:        if (c->bpop.timeout != 0 && c->bpop.timeout < now_ms) {
+redis.c.orig:946:    size_t querybuf_size = sdsAllocSize(c->querybuf);
+redis.c.orig:947:    time_t idletime = server.unixtime - c->lastinteraction;
+redis.c.orig:953:         (querybuf_size/(c->querybuf_peak+1)) > 2) ||
+redis.c.orig:957:        if (sdsavail(c->querybuf) > 1024) {
+redis.c.orig:958:            c->querybuf = sdsRemoveFreeSpace(c->querybuf);
+redis.c.orig:963:    c->querybuf_peak = 0;
+redis.c.orig:1907:        char *f = c->sflags;
+redis.c.orig:1912:            case 'w': c->flags |= REDIS_CMD_WRITE; break;
+redis.c.orig:1913:            case 'r': c->flags |= REDIS_CMD_READONLY; break;
+redis.c.orig:1914:            case 'm': c->flags |= REDIS_CMD_DENYOOM; break;
+redis.c.orig:1915:            case 'a': c->flags |= REDIS_CMD_ADMIN; break;
+redis.c.orig:1916:            case 'p': c->flags |= REDIS_CMD_PUBSUB; break;
+redis.c.orig:1917:            case 's': c->flags |= REDIS_CMD_NOSCRIPT; break;
+redis.c.orig:1918:            case 'R': c->flags |= REDIS_CMD_RANDOM; break;
+redis.c.orig:1919:            case 'S': c->flags |= REDIS_CMD_SORT_FOR_SCRIPT; break;
+redis.c.orig:1920:            case 'l': c->flags |= REDIS_CMD_LOADING; break;
+redis.c.orig:1921:            case 't': c->flags |= REDIS_CMD_STALE; break;
+redis.c.orig:1922:            case 'M': c->flags |= REDIS_CMD_SKIP_MONITOR; break;
+redis.c.orig:1923:            case 'k': c->flags |= REDIS_CMD_ASKING; break;
+redis.c.orig:1924:            case 'F': c->flags |= REDIS_CMD_FAST; break;
+redis.c.orig:1930:        retval1 = dictAdd(server.commands, sdsnew(c->name), c);
+redis.c.orig:1933:        retval2 = dictAdd(server.orig_commands, sdsnew(c->name), c);
+redis.c.orig:1945:        c->microseconds = 0;
+redis.c.orig:1946:        c->calls = 0;
+redis.c.orig:2045:    if (flags & REDIS_PROPAGATE_REPL) c->flags |= REDIS_FORCE_REPL;
+redis.c.orig:2046:    if (flags & REDIS_PROPAGATE_AOF) c->flags |= REDIS_FORCE_AOF;
+redis.c.orig:2052:    int client_old_flags = c->flags;
+redis.c.orig:2058:        !(c->cmd->flags & (REDIS_CMD_SKIP_MONITOR|REDIS_CMD_ADMIN)))
+redis.c.orig:2060:        replicationFeedMonitors(c,server.monitors,c->db->id,c->argv,c->argc);
+redis.c.orig:2064:    c->flags &= ~(REDIS_FORCE_AOF|REDIS_FORCE_REPL);
+redis.c.orig:2068:    c->cmd->proc(c);
+redis.c.orig:2075:    if (server.loading && c->flags & REDIS_LUA_CLIENT)
+redis.c.orig:2081:    if (c->flags & REDIS_LUA_CLIENT && server.lua_caller) {
+redis.c.orig:2082:        if (c->flags & REDIS_FORCE_REPL)
+redis.c.orig:2084:        if (c->flags & REDIS_FORCE_AOF)
+redis.c.orig:2090:    if (flags & REDIS_CALL_SLOWLOG && c->cmd->proc != execCommand) {
+redis.c.orig:2091:        char *latency_event = (c->cmd->flags & REDIS_CMD_FAST) ?
+redis.c.orig:2094:        slowlogPushEntryIfNeeded(c->argv,c->argc,duration);
+redis.c.orig:2097:        c->cmd->microseconds += duration;
+redis.c.orig:2098:        c->cmd->calls++;
+redis.c.orig:2105:        if (c->flags & REDIS_FORCE_REPL) flags |= REDIS_PROPAGATE_REPL;
+redis.c.orig:2106:        if (c->flags & REDIS_FORCE_AOF) flags |= REDIS_PROPAGATE_AOF;
+redis.c.orig:2110:            propagate(c->cmd,c->db->id,c->argv,c->argc,flags);
+redis.c.orig:2115:    c->flags &= ~(REDIS_FORCE_AOF|REDIS_FORCE_REPL);
+redis.c.orig:2116:    c->flags |= client_old_flags & (REDIS_FORCE_AOF|REDIS_FORCE_REPL);
+redis.c.orig:2146:    if (!strcasecmp(c->argv[0]->ptr,"quit")) {
+redis.c.orig:2148:        c->flags |= REDIS_CLOSE_AFTER_REPLY;
+redis.c.orig:2154:    c->cmd = c->lastcmd = lookupCommand(c->argv[0]->ptr);
+redis.c.orig:2155:    if (!c->cmd) {
+redis.c.orig:2158:            (char*)c->argv[0]->ptr);
+redis.c.orig:2160:    } else if ((c->cmd->arity > 0 && c->cmd->arity != c->argc) ||
+redis.c.orig:2161:               (c->argc < -c->cmd->arity)) {
+redis.c.orig:2164:            c->cmd->name);
+redis.c.orig:2169:    if (server.requirepass && !c->authenticated && c->cmd->proc != authCommand)
+redis.c.orig:2181:        !(c->flags & REDIS_MASTER) &&
+redis.c.orig:2182:        !(c->flags & REDIS_LUA_CLIENT &&
+redis.c.orig:2184:        !(c->cmd->getkeys_proc == NULL && c->cmd->firstkey == 0))
+redis.c.orig:2194:            clusterNode *n = getNodeByQuery(c,c->cmd,c->argv,c->argc,&hashslot,&error_code);
+redis.c.orig:2216:        if ((c->cmd->flags & REDIS_CMD_DENYOOM) && retval == REDIS_ERR) {
+redis.c.orig:2230:        (c->cmd->flags & REDIS_CMD_WRITE ||
+redis.c.orig:2231:         c->cmd->proc == pingCommand))
+redis.c.orig:2249:        c->cmd->flags & REDIS_CMD_WRITE &&
+redis.c.orig:2260:        !(c->flags & REDIS_MASTER) &&
+redis.c.orig:2261:        c->cmd->flags & REDIS_CMD_WRITE)
+redis.c.orig:2268:    if (c->flags & REDIS_PUBSUB &&
+redis.c.orig:2269:        c->cmd->proc != pingCommand &&
+redis.c.orig:2270:        c->cmd->proc != subscribeCommand &&
+redis.c.orig:2271:        c->cmd->proc != unsubscribeCommand &&
+redis.c.orig:2272:        c->cmd->proc != psubscribeCommand &&
+redis.c.orig:2273:        c->cmd->proc != punsubscribeCommand) {
+redis.c.orig:2282:        !(c->cmd->flags & REDIS_CMD_STALE))
+redis.c.orig:2291:    if (server.loading && !(c->cmd->flags & REDIS_CMD_LOADING)) {
+redis.c.orig:2298:          c->cmd->proc != authCommand &&
+redis.c.orig:2299:          c->cmd->proc != replconfCommand &&
+redis.c.orig:2300:        !(c->cmd->proc == shutdownCommand &&
+redis.c.orig:2301:          c->argc == 2 &&
+redis.c.orig:2302:          tolower(((char*)c->argv[1]->ptr)[0]) == 'n') &&
+redis.c.orig:2303:        !(c->cmd->proc == scriptCommand &&
+redis.c.orig:2304:          c->argc == 2 &&
+redis.c.orig:2305:          tolower(((char*)c->argv[1]->ptr)[0]) == 'k'))
+redis.c.orig:2313:    if (c->flags & REDIS_MULTI &&
+redis.c.orig:2314:        c->cmd->proc != execCommand && c->cmd->proc != discardCommand &&
+redis.c.orig:2315:        c->cmd->proc != multiCommand && c->cmd->proc != watchCommand)
+redis.c.orig:2321:        c->woff = server.master_repl_offset;
+redis.c.orig:2447:    } else if (!time_independent_strcmp(c->argv[1]->ptr, server.requirepass)) {
+redis.c.orig:2448:      c->authenticated = 1;
+redis.c.orig:2451:      c->authenticated = 0;
+redis.c.orig:2460:    if (c->argc > 2) {
+redis.c.orig:2462:            c->cmd->name);
+redis.c.orig:2466:    if (c->flags & REDIS_PUBSUB) {
+redis.c.orig:2469:        if (c->argc == 1)
+redis.c.orig:2472:            addReplyBulk(c,c->argv[1]);
+redis.c.orig:2474:        if (c->argc == 1)
+redis.c.orig:2477:            addReplyBulk(c,c->argv[1]);
+redis.c.orig:2482:    addReplyBulk(c,c->argv[1]);
+redis.c.orig:2548:    if (c->argc == 1) {
+redis.c.orig:2555:    } else if (!strcasecmp(c->argv[1]->ptr, "info")) {
+redis.c.orig:2557:        addReplyMultiBulkLen(c, c->argc-2);
+redis.c.orig:2558:        for (i = 2; i < c->argc; i++) {
+redis.c.orig:2559:            addReplyCommand(c, dictFetchValue(server.commands, c->argv[i]->ptr));
+redis.c.orig:2561:    } else if (!strcasecmp(c->argv[1]->ptr, "count") && c->argc == 2) {
+redis.c.orig:2563:    } else if (!strcasecmp(c->argv[1]->ptr,"getkeys") && c->argc >= 3) {
+redis.c.orig:2564:        struct redisCommand *cmd = lookupCommand(c->argv[2]->ptr);
+redis.c.orig:2570:        } else if ((cmd->arity > 0 && cmd->arity != c->argc-2) ||
+redis.c.orig:2571:                   ((c->argc-2) < -cmd->arity))
+redis.c.orig:2577:        keys = getKeysFromCommand(cmd,c->argv+2,c->argc-2,&numkeys);
+redis.c.orig:2579:        for (j = 0; j < numkeys; j++) addReplyBulk(c,c->argv[keys[j]+2]);
+redis.c.orig:3020:            if (!c->calls) continue;
+redis.c.orig:3023:                c->name, c->calls, c->microseconds,
+redis.c.orig:3024:                (c->calls == 0) ? 0 : ((float)c->microseconds/c->calls));
+redis.c.orig:3057:    char *section = c->argc == 2 ? c->argv[1]->ptr : "default";
+redis.c.orig:3059:    if (c->argc > 2) {
+redis.c.orig:3072:    if (c->flags & REDIS_SLAVE) return;
+redis.c.orig:3074:    c->flags |= (REDIS_SLAVE|REDIS_MONITOR);
+redis.h:844:    off_t repl_transfer_last_fsync_off; /* Offset when we fsync-ed last time. */
+redis.h.orig:844:    off_t repl_transfer_last_fsync_off; /* Offset when we fsync-ed last time. */
+redis-trib.rb:1564:# Name                       : "XMODEM", also known as "ZMODEM", "CRC-16/ACORN"
+replication.c:57:    if (anetPeerToString(c->fd,ip,sizeof(ip),NULL) != -1) {
+replication.c:58:        if (c->slave_listening_port)
+replication.c:59:            snprintf(buf,sizeof(buf),"%s:%d",ip,c->slave_listening_port);
+replication.c:64:            (unsigned long long) c->id);
+replication.c:272:    if (c->flags & REDIS_LUA_CLIENT) {
+replication.c:274:    } else if (c->flags & REDIS_UNIX_SOCKET) {
+replication.c:287:        if (j != argc-1)
+replication.c:412:    char *master_runid = c->argv[1]->ptr;
+replication.c:433:    if (getLongLongFromObjectOrReply(c,c->argv[2],&psync_offset,NULL) !=
+replication.c:452:    c->flags |= REDIS_SLAVE;
+replication.c:453:    c->replstate = REDIS_REPL_ONLINE;
+replication.c:454:    c->repl_ack_time = server.unixtime;
+replication.c:455:    c->repl_put_online_on_ack = 0;
+replication.c:461:    if (write(c->fd,buf,buflen) != buflen) {
+replication.c:560:    if (c->flags & REDIS_SLAVE) return;
+replication.c:573:    if (listLength(c->reply) != 0 || c->bufpos != 0) {
+replication.c:590:    if (!strcasecmp(c->argv[0]->ptr,"psync")) {
+replication.c:595:            char *master_runid = c->argv[1]->ptr;
+replication.c:607:        c->flags |= REDIS_PRE_PSYNC;
+replication.c:615:    c->replstate = REDIS_REPL_WAIT_BGSAVE_START;
+replication.c:617:        anetDisableTcpNoDelay(NULL, c->fd); /* Non critical if it fails. */
+replication.c:618:    c->repldbfd = -1;
+replication.c:619:    c->flags |= REDIS_SLAVE;
+replication.c:640:        if (ln && ((c->slave_capa & slave->slave_capa) == slave->slave_capa)) {
+replication.c:663:        if (server.repl_diskless_sync && (c->slave_capa & SLAVE_CAPA_EOF)) {
+replication.c:673:            if (startBgsaveForReplication(c->slave_capa) != REDIS_OK) return;
+replication.c:697:    if ((c->argc % 2) == 0) {
+replication.c:705:    for (j = 1; j < c->argc; j+=2) {
+replication.c:706:        if (!strcasecmp(c->argv[j]->ptr,"listening-port")) {
+replication.c:709:            if ((getLongFromObjectOrReply(c,c->argv[j+1],
+replication.c:712:            c->slave_listening_port = port;
+replication.c:713:        } else if (!strcasecmp(c->argv[j]->ptr,"capa")) {
+replication.c:715:            if (!strcasecmp(c->argv[j+1]->ptr,"eof"))
+replication.c:716:                c->slave_capa |= SLAVE_CAPA_EOF;
+replication.c:717:        } else if (!strcasecmp(c->argv[j]->ptr,"ack")) {
+replication.c:723:            if (!(c->flags & REDIS_SLAVE)) return;
+replication.c:724:            if ((getLongLongFromObject(c->argv[j+1], &offset) != REDIS_OK))
+replication.c:726:            if (offset > c->repl_ack_off)
+replication.c:727:                c->repl_ack_off = offset;
+replication.c:728:            c->repl_ack_time = server.unixtime;
+replication.c:732:            if (c->repl_put_online_on_ack && c->replstate == REDIS_REPL_ONLINE)
+replication.c:736:        } else if (!strcasecmp(c->argv[j]->ptr,"getack")) {
+replication.c:743:                (char*)c->argv[j]->ptr);
+replication.c:919:/* Abort the async download of the bulk dataset while SYNC-ing with master */
+replication.c:1723:    if (!strcasecmp(c->argv[1]->ptr,"no") &&
+replication.c:1724:        !strcasecmp(c->argv[2]->ptr,"one")) {
+replication.c:1735:        if ((getLongFromObjectOrReply(c, c->argv[2], &port, NULL) != REDIS_OK))
+replication.c:1739:        if (server.masterhost && !strcasecmp(server.masterhost,c->argv[1]->ptr)
+replication.c:1747:        replicationSetMaster(c->argv[1]->ptr, port);
+replication.c:1815:        c->flags |= REDIS_MASTER_FORCE_REPLY;
+replication.c:1819:        addReplyBulkLongLong(c,c->reploff);
+replication.c:1820:        c->flags &= ~REDIS_MASTER_FORCE_REPLY;
+replication.c:1862:    aeDeleteFileEvent(server.el,c->fd,AE_READABLE);
+replication.c:1863:    aeDeleteFileEvent(server.el,c->fd,AE_WRITABLE);
+replication.c:1864:    close(c->fd);
+replication.c:1867:    c->fd = -1;
+replication.c:1870:    if (c->peerid) {
+replication.c:1871:        sdsfree(c->peerid);
+replication.c:1872:        c->peerid = NULL;
+replication.c:2090:    long long offset = c->woff;
+replication.c:2093:    if (getLongFromObjectOrReply(c,c->argv[1],&numreplicas,NULL) != REDIS_OK)
+replication.c:2095:    if (getTimeoutFromObjectOrReply(c,c->argv[2],&timeout,UNIT_MILLISECONDS)
+replication.c:2099:    ackreplicas = replicationCountAcksByOffset(c->woff);
+replication.c:2100:    if (ackreplicas >= numreplicas || c->flags & REDIS_MULTI) {
+replication.c:2107:    c->bpop.timeout = timeout;
+replication.c:2108:    c->bpop.reploffset = offset;
+replication.c:2109:    c->bpop.numreplicas = numreplicas;
+replication.c:2145:        if (last_offset && last_offset > c->bpop.reploffset &&
+replication.c:2146:                           last_numreplicas > c->bpop.numreplicas)
+replication.c:2151:            int numreplicas = replicationCountAcksByOffset(c->bpop.reploffset);
+replication.c:2153:            if (numreplicas >= c->bpop.numreplicas) {
+replication.c:2154:                last_offset = c->bpop.reploffset;
+scripting.c:297:    c->argv = argv;
+scripting.c:298:    c->argc = argc;
+scripting.c:312:    c->cmd = cmd;
+scripting.c:364:        c->flags &= ~(REDIS_READONLY|REDIS_ASKING);
+scripting.c:365:        c->flags |= server.lua_caller->flags & (REDIS_READONLY|REDIS_ASKING);
+scripting.c:366:        if (getNodeByQuery(c,c->cmd,c->argv,c->argc,NULL,NULL) !=
+scripting.c:382:    if (listLength(c->reply) == 0 && c->bufpos < REDIS_REPLY_CHUNK_BYTES) {
+scripting.c:386:        c->buf[c->bufpos] = '\0';
+scripting.c:387:        reply = c->buf;
+scripting.c:388:        c->bufpos = 0;
+scripting.c:390:        reply = sdsnewlen(c->buf,c->bufpos);
+scripting.c:391:        c->bufpos = 0;
+scripting.c:392:        while(listLength(c->reply)) {
+scripting.c:393:            robj *o = listNodeValue(listFirst(c->reply));
+scripting.c:396:            listDelNode(c->reply,listFirst(c->reply));
+scripting.c:407:    if (reply != c->buf) sdsfree(reply);
+scripting.c:408:    c->reply_bytes = 0;
+scripting.c:413:    for (j = 0; j < c->argc; j++) {
+scripting.c:414:        robj *o = c->argv[j];
+scripting.c:435:    if (c->argv != argv) {
+scripting.c:436:        zfree(c->argv);
+scripting.c:949:    if (getLongLongFromObjectOrReply(c,c->argv[2],&numkeys,NULL) != REDIS_OK)
+scripting.c:951:    if (numkeys > (c->argc - 3)) {
+scripting.c:965:        sha1hex(funcname+2,c->argv[1]->ptr,sdslen(c->argv[1]->ptr));
+scripting.c:969:        char *sha = c->argv[1]->ptr;
+scripting.c:995:        if (luaCreateFunction(c,lua,funcname,c->argv[1]) == REDIS_ERR) {
+scripting.c:1008:    luaSetGlobalArray(lua,"KEYS",c->argv+3,numkeys);
+scripting.c:1009:    luaSetGlobalArray(lua,"ARGV",c->argv+3+numkeys,c->argc-3-numkeys);
+scripting.c:1012:    selectDb(server.lua_client,c->db->id);
+scripting.c:1037:        aeCreateFileEvent(server.el,c->fd,AE_READABLE,
+scripting.c:1081:        if (!replicationScriptCacheExists(c->argv[1]->ptr)) {
+scripting.c:1085:            robj *script = dictFetchValue(server.lua_scripts,c->argv[1]->ptr);
+scripting.c:1087:            replicationScriptCacheAdd(c->argv[1]->ptr);
+scripting.c:1102:    if (sdslen(c->argv[1]->ptr) != 40) {
+scripting.c:1157:    if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr,"flush")) {
+scripting.c:1162:    } else if (c->argc >= 2 && !strcasecmp(c->argv[1]->ptr,"exists")) {
+scripting.c:1165:        addReplyMultiBulkLen(c, c->argc-2);
+scripting.c:1166:        for (j = 2; j < c->argc; j++) {
+scripting.c:1167:            if (dictFind(server.lua_scripts,c->argv[j]->ptr))
+scripting.c:1172:    } else if (c->argc == 3 && !strcasecmp(c->argv[1]->ptr,"load")) {
+scripting.c:1178:        sha1hex(funcname+2,c->argv[2]->ptr,sdslen(c->argv[2]->ptr));
+scripting.c:1181:            if (luaCreateFunction(c,server.lua,funcname,c->argv[2])
+scripting.c:1190:    } else if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr,"kill")) {
+sds.c:960:        if (j != argc-1) join = sdscat(join,sep);
+sentinel.c:295:    redisContext *c = &(ac->c);
+sentinel.c:299:    if (ac->ev.data != NULL)
+sentinel.c:306:    e->fd = c->fd;
+sentinel.c:310:    ac->ev.addRead = redisAeAddRead;
+sentinel.c:311:    ac->ev.delRead = redisAeDelRead;
+sentinel.c:312:    ac->ev.addWrite = redisAeAddWrite;
+sentinel.c:313:    ac->ev.delWrite = redisAeDelWrite;
+sentinel.c:314:    ac->ev.cleanup = redisAeCleanup;
+sentinel.c:315:    ac->ev.data = e;
+sentinel.c:488:    sa->ip = sdsnew(src->ip);
+sentinel.c:489:    sa->port = src->port;
+sentinel.c:1626:    c->data = NULL;
+sentinel.c:1638:    sentinelRedisInstance *ri = c->data;
+sentinel.c:1645:        "%@ #%s", c->errstr);
+sentinel.c:1657:        sentinelRedisInstance *ri = c->data;
+sentinel.c:1712:        if (ri->cc->err) {
+sentinel.c:1714:                ri->cc->errstr);
+sentinel.c:1718:            ri->cc->data = ri;
+sentinel.c:1734:        if (ri->pc->err) {
+sentinel.c:1736:                ri->pc->errstr);
+sentinel.c:1742:            ri->pc->data = ri;
+sentinel.c:2030:    sentinelRedisInstance *ri = c->data;
+sentinel.c:2046:    sentinelRedisInstance *ri = c->data;
+sentinel.c:2054:    sentinelRedisInstance *ri = c->data;
+sentinel.c:2093:    sentinelRedisInstance *ri = c->data;
+sentinel.c:2203:    sentinelRedisInstance *ri = c->data;
+sentinel.c:2257:        if (anetSockName(ri->cc->c.fd,ip,sizeof(ip),NULL) == -1)
+sentinel.c:2645:    if (!strcasecmp(c->argv[1]->ptr,"masters")) {
+sentinel.c:2647:        if (c->argc != 2) goto numargserr;
+sentinel.c:2649:    } else if (!strcasecmp(c->argv[1]->ptr,"master")) {
+sentinel.c:2653:        if (c->argc != 3) goto numargserr;
+sentinel.c:2654:        if ((ri = sentinelGetMasterByNameOrReplyError(c,c->argv[2]))
+sentinel.c:2657:    } else if (!strcasecmp(c->argv[1]->ptr,"slaves")) {
+sentinel.c:2661:        if (c->argc != 3) goto numargserr;
+sentinel.c:2662:        if ((ri = sentinelGetMasterByNameOrReplyError(c,c->argv[2])) == NULL)
+sentinel.c:2665:    } else if (!strcasecmp(c->argv[1]->ptr,"sentinels")) {
+sentinel.c:2669:        if (c->argc != 3) goto numargserr;
+sentinel.c:2670:        if ((ri = sentinelGetMasterByNameOrReplyError(c,c->argv[2])) == NULL)
+sentinel.c:2673:    } else if (!strcasecmp(c->argv[1]->ptr,"is-master-down-by-addr")) {
+sentinel.c:2682:        if (c->argc != 6) goto numargserr;
+sentinel.c:2683:        if (getLongFromObjectOrReply(c,c->argv[3],&port,NULL) != REDIS_OK ||
+sentinel.c:2684:            getLongLongFromObjectOrReply(c,c->argv[4],&req_epoch,NULL)
+sentinel.c:2688:            c->argv[2]->ptr,port,NULL);
+sentinel.c:2698:        if (ri && ri->flags & SRI_MASTER && strcasecmp(c->argv[5]->ptr,"*")) {
+sentinel.c:2700:                                            c->argv[5]->ptr,
+sentinel.c:2711:    } else if (!strcasecmp(c->argv[1]->ptr,"reset")) {
+sentinel.c:2713:        if (c->argc != 3) goto numargserr;
+sentinel.c:2714:        addReplyLongLong(c,sentinelResetMastersByPattern(c->argv[2]->ptr,SENTINEL_GENERATE_EVENT));
+sentinel.c:2715:    } else if (!strcasecmp(c->argv[1]->ptr,"get-master-addr-by-name")) {
+sentinel.c:2719:        if (c->argc != 3) goto numargserr;
+sentinel.c:2720:        ri = sentinelGetMasterByName(c->argv[2]->ptr);
+sentinel.c:2730:    } else if (!strcasecmp(c->argv[1]->ptr,"failover")) {
+sentinel.c:2734:        if (c->argc != 3) goto numargserr;
+sentinel.c:2735:        if ((ri = sentinelGetMasterByNameOrReplyError(c,c->argv[2])) == NULL)
+sentinel.c:2750:    } else if (!strcasecmp(c->argv[1]->ptr,"pending-scripts")) {
+sentinel.c:2753:        if (c->argc != 2) goto numargserr;
+sentinel.c:2755:    } else if (!strcasecmp(c->argv[1]->ptr,"monitor")) {
+sentinel.c:2761:        if (c->argc != 6) goto numargserr;
+sentinel.c:2762:        if (getLongFromObjectOrReply(c,c->argv[5],&quorum,"Invalid quorum")
+sentinel.c:2764:        if (getLongFromObjectOrReply(c,c->argv[4],&port,"Invalid port")
+sentinel.c:2769:        if (anetResolveIP(NULL,c->argv[3]->ptr,ip,sizeof(ip)) == ANET_ERR) {
+sentinel.c:2775:        ri = createSentinelRedisInstance(c->argv[2]->ptr,SRI_MASTER,
+sentinel.c:2776:                c->argv[3]->ptr,port,quorum,NULL);
+sentinel.c:2794:    } else if (!strcasecmp(c->argv[1]->ptr,"flushconfig")) {
+sentinel.c:2795:        if (c->argc != 2) goto numargserr;
+sentinel.c:2799:    } else if (!strcasecmp(c->argv[1]->ptr,"remove")) {
+sentinel.c:2803:        if (c->argc != 3) goto numargserr;
+sentinel.c:2804:        if ((ri = sentinelGetMasterByNameOrReplyError(c,c->argv[2]))
+sentinel.c:2807:        dictDelete(sentinel.masters,c->argv[2]->ptr);
+sentinel.c:2810:    } else if (!strcasecmp(c->argv[1]->ptr,"ckquorum")) {
+sentinel.c:2815:        if (c->argc != 3) goto numargserr;
+sentinel.c:2816:        if ((ri = sentinelGetMasterByNameOrReplyError(c,c->argv[2]))
+sentinel.c:2837:    } else if (!strcasecmp(c->argv[1]->ptr,"set")) {
+sentinel.c:2838:        if (c->argc < 3 || c->argc % 2 == 0) goto numargserr;
+sentinel.c:2842:                               (char*)c->argv[1]->ptr);
+sentinel.c:2848:                          (char*)c->argv[1]->ptr);
+sentinel.c:2853:    char *section = c->argc == 2 ? c->argv[1]->ptr : "default";
+sentinel.c:2858:    if (c->argc > 2) {
+sentinel.c:2936:    if ((ri = sentinelGetMasterByNameOrReplyError(c,c->argv[2]))
+sentinel.c:2940:    for (j = 3; j < c->argc; j += 2) {
+sentinel.c:2941:        option = c->argv[j]->ptr;
+sentinel.c:2942:        value = c->argv[j+1]->ptr;
+sentinel.c:2943:        robj *o = c->argv[j+1];
+sentinel.c:3025:    if (strcmp(c->argv[1]->ptr,SENTINEL_HELLO_CHANNEL)) {
+sentinel.c:3029:    sentinelProcessHelloMessage(c->argv[2]->ptr,sdslen(c->argv[2]->ptr));
+sentinel.c:3142:    sentinelRedisInstance *ri = c->data;
+slowlog.c:59:        if (slargc != argc && j == slargc-1) {
+slowlog.c:62:                argc-slargc+1));
+slowlog.c:131:    if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr,"reset")) {
+slowlog.c:134:    } else if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr,"len")) {
+slowlog.c:136:    } else if ((c->argc == 2 || c->argc == 3) &&
+slowlog.c:137:               !strcasecmp(c->argv[1]->ptr,"get"))
+slowlog.c:145:        if (c->argc == 3 &&
+slowlog.c:146:            getLongFromObjectOrReply(c,c->argv[2],&count,NULL) != REDIS_OK)
+sort.c:202:    sortval = lookupKeyRead(c->db,c->argv[1]);
+sort.c:226:    while(j < c->argc) {
+sort.c:227:        int leftargs = c->argc-j-1;
+sort.c:228:        if (!strcasecmp(c->argv[j]->ptr,"asc")) {
+sort.c:230:        } else if (!strcasecmp(c->argv[j]->ptr,"desc")) {
+sort.c:232:        } else if (!strcasecmp(c->argv[j]->ptr,"alpha")) {
+sort.c:234:        } else if (!strcasecmp(c->argv[j]->ptr,"limit") && leftargs >= 2) {
+sort.c:235:            if ((getLongFromObjectOrReply(c, c->argv[j+1], &limit_start, NULL)
+sort.c:237:                (getLongFromObjectOrReply(c, c->argv[j+2], &limit_count, NULL)
+sort.c:244:        } else if (!strcasecmp(c->argv[j]->ptr,"store") && leftargs >= 1) {
+sort.c:245:            storekey = c->argv[j+1];
+sort.c:247:        } else if (!strcasecmp(c->argv[j]->ptr,"by") && leftargs >= 1) {
+sort.c:248:            sortby = c->argv[j+1];
+sort.c:251:            if (strchr(c->argv[j+1]->ptr,'*') == NULL) {
+sort.c:263:        } else if (!strcasecmp(c->argv[j]->ptr,"get") && leftargs >= 1) {
+sort.c:270:                REDIS_SORT_GET,c->argv[j+1]));
+sort.c:296:        (storekey || c->flags & REDIS_LUA_CLIENT))
+sort.c:431:                byval = lookupKeyByPattern(c->db,sortby,vector[j].obj);
+sort.c:495:                robj *val = lookupKeyByPattern(c->db,sop->pattern,
+sort.c:525:                    robj *val = lookupKeyByPattern(c->db,sop->pattern,
+sort.c:544:            setKey(c->db,storekey,sobj);
+sort.c:546:                                c->db->id);
+sort.c:548:        } else if (dbDelete(c->db,storekey)) {
+sort.c:549:            signalModifiedKey(c->db,storekey);
+sort.c:550:            notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",storekey,c->db->id);
+t_hash.c:397:    robj *o = lookupKeyWrite(c->db,key);
+t_hash.c:400:        dbAdd(c->db,key,o);
+t_hash.c:468:    if ((o = hashTypeLookupWriteOrCreate(c,c->argv[1])) == NULL) return;
+t_hash.c:469:    hashTypeTryConversion(o,c->argv,2,3);
+t_hash.c:470:    hashTypeTryObjectEncoding(o,&c->argv[2], &c->argv[3]);
+t_hash.c:471:    update = hashTypeSet(o,c->argv[2],c->argv[3]);
+t_hash.c:473:    signalModifiedKey(c->db,c->argv[1]);
+t_hash.c:474:    notifyKeyspaceEvent(REDIS_NOTIFY_HASH,"hset",c->argv[1],c->db->id);
+t_hash.c:480:    if ((o = hashTypeLookupWriteOrCreate(c,c->argv[1])) == NULL) return;
+t_hash.c:481:    hashTypeTryConversion(o,c->argv,2,3);
+t_hash.c:483:    if (hashTypeExists(o, c->argv[2])) {
+t_hash.c:486:        hashTypeTryObjectEncoding(o,&c->argv[2], &c->argv[3]);
+t_hash.c:487:        hashTypeSet(o,c->argv[2],c->argv[3]);
+t_hash.c:489:        signalModifiedKey(c->db,c->argv[1]);
+t_hash.c:490:        notifyKeyspaceEvent(REDIS_NOTIFY_HASH,"hset",c->argv[1],c->db->id);
+t_hash.c:499:    if ((c->argc % 2) == 1) {
+t_hash.c:504:    if ((o = hashTypeLookupWriteOrCreate(c,c->argv[1])) == NULL) return;
+t_hash.c:505:    hashTypeTryConversion(o,c->argv,2,c->argc-1);
+t_hash.c:506:    for (i = 2; i < c->argc; i += 2) {
+t_hash.c:507:        hashTypeTryObjectEncoding(o,&c->argv[i], &c->argv[i+1]);
+t_hash.c:508:        hashTypeSet(o,c->argv[i],c->argv[i+1]);
+t_hash.c:511:    signalModifiedKey(c->db,c->argv[1]);
+t_hash.c:512:    notifyKeyspaceEvent(REDIS_NOTIFY_HASH,"hset",c->argv[1],c->db->id);
+t_hash.c:520:    if (getLongLongFromObjectOrReply(c,c->argv[3],&incr,NULL) != REDIS_OK) return;
+t_hash.c:521:    if ((o = hashTypeLookupWriteOrCreate(c,c->argv[1])) == NULL) return;
+t_hash.c:522:    if ((current = hashTypeGetObject(o,c->argv[2])) != NULL) {
+t_hash.c:541:    hashTypeTryObjectEncoding(o,&c->argv[2],NULL);
+t_hash.c:542:    hashTypeSet(o,c->argv[2],new);
+t_hash.c:545:    signalModifiedKey(c->db,c->argv[1]);
+t_hash.c:546:    notifyKeyspaceEvent(REDIS_NOTIFY_HASH,"hincrby",c->argv[1],c->db->id);
+t_hash.c:554:    if (getLongDoubleFromObjectOrReply(c,c->argv[3],&incr,NULL) != REDIS_OK) return;
+t_hash.c:555:    if ((o = hashTypeLookupWriteOrCreate(c,c->argv[1])) == NULL) return;
+t_hash.c:556:    if ((current = hashTypeGetObject(o,c->argv[2])) != NULL) {
+t_hash.c:569:    hashTypeTryObjectEncoding(o,&c->argv[2],NULL);
+t_hash.c:570:    hashTypeSet(o,c->argv[2],new);
+t_hash.c:572:    signalModifiedKey(c->db,c->argv[1]);
+t_hash.c:573:    notifyKeyspaceEvent(REDIS_NOTIFY_HASH,"hincrbyfloat",c->argv[1],c->db->id);
+t_hash.c:628:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.nullbulk)) == NULL ||
+t_hash.c:631:    addHashFieldToReply(c, o, c->argv[2]);
+t_hash.c:640:    o = lookupKeyRead(c->db, c->argv[1]);
+t_hash.c:646:    addReplyMultiBulkLen(c, c->argc-2);
+t_hash.c:647:    for (i = 2; i < c->argc; i++) {
+t_hash.c:648:        addHashFieldToReply(c, o, c->argv[i]);
+t_hash.c:656:    if ((o = lookupKeyWriteOrReply(c,c->argv[1],shared.czero)) == NULL ||
+t_hash.c:659:    for (j = 2; j < c->argc; j++) {
+t_hash.c:660:        if (hashTypeDelete(o,c->argv[j])) {
+t_hash.c:663:                dbDelete(c->db,c->argv[1]);
+t_hash.c:670:        signalModifiedKey(c->db,c->argv[1]);
+t_hash.c:671:        notifyKeyspaceEvent(REDIS_NOTIFY_HASH,"hdel",c->argv[1],c->db->id);
+t_hash.c:673:            notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",c->argv[1],
+t_hash.c:674:                                c->db->id);
+t_hash.c:682:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
+t_hash.c:718:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.emptymultibulk)) == NULL
+t_hash.c:757:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
+t_hash.c:760:    addReply(c, hashTypeExists(o,c->argv[2]) ? shared.cone : shared.czero);
+t_hash.c:767:    if (parseScanCursorOrReply(c,c->argv[2],&cursor) == REDIS_ERR) return;
+t_hash.c:768:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.emptyscan)) == NULL ||
+t_list.c:297:    robj *lobj = lookupKeyWrite(c->db,c->argv[1]);
+t_list.c:304:    for (j = 2; j < c->argc; j++) {
+t_list.c:305:        c->argv[j] = tryObjectEncoding(c->argv[j]);
+t_list.c:308:            dbAdd(c->db,c->argv[1],lobj);
+t_list.c:310:        listTypePush(lobj,c->argv[j],where);
+t_list.c:317:        signalModifiedKey(c->db,c->argv[1]);
+t_list.c:318:        notifyKeyspaceEvent(REDIS_NOTIFY_LIST,event,c->argv[1],c->db->id);
+t_list.c:337:    if ((subject = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
+t_list.c:364:            signalModifiedKey(c->db,c->argv[1]);
+t_list.c:366:                                c->argv[1],c->db->id);
+t_list.c:377:        signalModifiedKey(c->db,c->argv[1]);
+t_list.c:378:        notifyKeyspaceEvent(REDIS_NOTIFY_LIST,event,c->argv[1],c->db->id);
+t_list.c:386:    c->argv[2] = tryObjectEncoding(c->argv[2]);
+t_list.c:387:    pushxGenericCommand(c,NULL,c->argv[2],REDIS_HEAD);
+t_list.c:391:    c->argv[2] = tryObjectEncoding(c->argv[2]);
+t_list.c:392:    pushxGenericCommand(c,NULL,c->argv[2],REDIS_TAIL);
+t_list.c:396:    c->argv[4] = tryObjectEncoding(c->argv[4]);
+t_list.c:397:    if (strcasecmp(c->argv[2]->ptr,"after") == 0) {
+t_list.c:398:        pushxGenericCommand(c,c->argv[3],c->argv[4],REDIS_TAIL);
+t_list.c:399:    } else if (strcasecmp(c->argv[2]->ptr,"before") == 0) {
+t_list.c:400:        pushxGenericCommand(c,c->argv[3],c->argv[4],REDIS_HEAD);
+t_list.c:407:    robj *o = lookupKeyReadOrReply(c,c->argv[1],shared.czero);
+t_list.c:413:    robj *o = lookupKeyReadOrReply(c,c->argv[1],shared.nullbulk);
+t_list.c:418:    if ((getLongFromObjectOrReply(c, c->argv[2], &index, NULL) != REDIS_OK))
+t_list.c:452:    robj *o = lookupKeyWriteOrReply(c,c->argv[1],shared.nokeyerr);
+t_list.c:455:    robj *value = (c->argv[3] = tryObjectEncoding(c->argv[3]));
+t_list.c:457:    if ((getLongFromObjectOrReply(c, c->argv[2], &index, NULL) != REDIS_OK))
+t_list.c:472:            signalModifiedKey(c->db,c->argv[1]);
+t_list.c:473:            notifyKeyspaceEvent(REDIS_NOTIFY_LIST,"lset",c->argv[1],c->db->id);
+t_list.c:485:            signalModifiedKey(c->db,c->argv[1]);
+t_list.c:486:            notifyKeyspaceEvent(REDIS_NOTIFY_LIST,"lset",c->argv[1],c->db->id);
+t_list.c:495:    robj *o = lookupKeyWriteOrReply(c,c->argv[1],shared.nullbulk);
+t_list.c:506:        notifyKeyspaceEvent(REDIS_NOTIFY_LIST,event,c->argv[1],c->db->id);
+t_list.c:509:                                c->argv[1],c->db->id);
+t_list.c:510:            dbDelete(c->db,c->argv[1]);
+t_list.c:512:        signalModifiedKey(c->db,c->argv[1]);
+t_list.c:529:    if ((getLongFromObjectOrReply(c, c->argv[2], &start, NULL) != REDIS_OK) ||
+t_list.c:530:        (getLongFromObjectOrReply(c, c->argv[3], &end, NULL) != REDIS_OK)) return;
+t_list.c:532:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.emptymultibulk)) == NULL
+t_list.c:590:    if ((getLongFromObjectOrReply(c, c->argv[2], &start, NULL) != REDIS_OK) ||
+t_list.c:591:        (getLongFromObjectOrReply(c, c->argv[3], &end, NULL) != REDIS_OK)) return;
+t_list.c:593:    if ((o = lookupKeyWriteOrReply(c,c->argv[1],shared.ok)) == NULL ||
+t_list.c:632:    notifyKeyspaceEvent(REDIS_NOTIFY_LIST,"ltrim",c->argv[1],c->db->id);
+t_list.c:634:        dbDelete(c->db,c->argv[1]);
+t_list.c:635:        notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",c->argv[1],c->db->id);
+t_list.c:637:    signalModifiedKey(c->db,c->argv[1]);
+t_list.c:644:    obj = c->argv[3] = tryObjectEncoding(c->argv[3]);
+t_list.c:649:    if ((getLongFromObjectOrReply(c, c->argv[2], &toremove, NULL) != REDIS_OK))
+t_list.c:652:    subject = lookupKeyWriteOrReply(c,c->argv[1],shared.czero);
+t_list.c:681:    if (listTypeLength(subject) == 0) dbDelete(c->db,c->argv[1]);
+t_list.c:683:    if (removed) signalModifiedKey(c->db,c->argv[1]);
+t_list.c:706:        dbAdd(c->db,dstkey,dstobj);
+t_list.c:708:    signalModifiedKey(c->db,dstkey);
+t_list.c:710:    notifyKeyspaceEvent(REDIS_NOTIFY_LIST,"lpush",dstkey,c->db->id);
+t_list.c:717:    if ((sobj = lookupKeyWriteOrReply(c,c->argv[1],shared.nullbulk)) == NULL ||
+t_list.c:725:        robj *dobj = lookupKeyWrite(c->db,c->argv[2]);
+t_list.c:726:        robj *touchedkey = c->argv[1];
+t_list.c:734:        rpoplpushHandlePush(c,c->argv[2],dobj,value);
+t_list.c:740:        notifyKeyspaceEvent(REDIS_NOTIFY_LIST,"rpop",touchedkey,c->db->id);
+t_list.c:742:            dbDelete(c->db,touchedkey);
+t_list.c:744:                                touchedkey,c->db->id);
+t_list.c:746:        signalModifiedKey(c->db,touchedkey);
+t_list.c:780:    c->bpop.timeout = timeout;
+t_list.c:781:    c->bpop.target = target;
+t_list.c:787:        if (dictAdd(c->bpop.keys,keys[j],NULL) != DICT_OK) continue;
+t_list.c:791:        de = dictFind(c->db->blocking_keys,keys[j]);
+t_list.c:797:            retval = dictAdd(c->db->blocking_keys,keys[j],l);
+t_list.c:815:    redisAssertWithInfo(c,NULL,dictSize(c->bpop.keys) != 0);
+t_list.c:816:    di = dictGetIterator(c->bpop.keys);
+t_list.c:822:        l = dictFetchValue(c->db->blocking_keys,key);
+t_list.c:827:            dictDelete(c->db->blocking_keys,key);
+t_list.c:832:    dictEmpty(c->bpop.keys,NULL);
+t_list.c:833:    if (c->bpop.target) {
+t_list.c:834:        decrRefCount(c->bpop.target);
+t_list.c:835:        c->bpop.target = NULL;
+t_list.c:1033:    if (getTimeoutFromObjectOrReply(c,c->argv[c->argc-1],&timeout,UNIT_SECONDS)
+t_list.c:1036:    for (j = 1; j < c->argc-1; j++) {
+t_list.c:1037:        o = lookupKeyWrite(c->db,c->argv[j]);
+t_list.c:1050:                    addReplyBulk(c,c->argv[j]);
+t_list.c:1054:                                        c->argv[j],c->db->id);
+t_list.c:1056:                        dbDelete(c->db,c->argv[j]);
+t_list.c:1058:                                            c->argv[j],c->db->id);
+t_list.c:1060:                    signalModifiedKey(c->db,c->argv[j]);
+t_list.c:1066:                        c->argv[j]);
+t_list.c:1075:    if (c->flags & REDIS_MULTI) {
+t_list.c:1081:    blockForKeys(c, c->argv + 1, c->argc - 2, timeout, NULL);
+t_list.c:1095:    if (getTimeoutFromObjectOrReply(c,c->argv[3],&timeout,UNIT_SECONDS)
+t_list.c:1098:    robj *key = lookupKeyWrite(c->db, c->argv[1]);
+t_list.c:1101:        if (c->flags & REDIS_MULTI) {
+t_list.c:1107:            blockForKeys(c, c->argv + 1, 1, timeout, c->argv[2]);
+t_set.c:254:    set = lookupKeyWrite(c->db,c->argv[1]);
+t_set.c:256:        set = setTypeCreate(c->argv[2]);
+t_set.c:257:        dbAdd(c->db,c->argv[1],set);
+t_set.c:265:    for (j = 2; j < c->argc; j++) {
+t_set.c:266:        c->argv[j] = tryObjectEncoding(c->argv[j]);
+t_set.c:267:        if (setTypeAdd(set,c->argv[j])) added++;
+t_set.c:270:        signalModifiedKey(c->db,c->argv[1]);
+t_set.c:271:        notifyKeyspaceEvent(REDIS_NOTIFY_SET,"sadd",c->argv[1],c->db->id);
+t_set.c:281:    if ((set = lookupKeyWriteOrReply(c,c->argv[1],shared.czero)) == NULL ||
+t_set.c:284:    for (j = 2; j < c->argc; j++) {
+t_set.c:285:        if (setTypeRemove(set,c->argv[j])) {
+t_set.c:288:                dbDelete(c->db,c->argv[1]);
+t_set.c:295:        signalModifiedKey(c->db,c->argv[1]);
+t_set.c:296:        notifyKeyspaceEvent(REDIS_NOTIFY_SET,"srem",c->argv[1],c->db->id);
+t_set.c:298:            notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",c->argv[1],
+t_set.c:299:                                c->db->id);
+t_set.c:307:    srcset = lookupKeyWrite(c->db,c->argv[1]);
+t_set.c:308:    dstset = lookupKeyWrite(c->db,c->argv[2]);
+t_set.c:309:    ele = c->argv[3] = tryObjectEncoding(c->argv[3]);
+t_set.c:333:    notifyKeyspaceEvent(REDIS_NOTIFY_SET,"srem",c->argv[1],c->db->id);
+t_set.c:337:        dbDelete(c->db,c->argv[1]);
+t_set.c:338:        notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",c->argv[1],c->db->id);
+t_set.c:340:    signalModifiedKey(c->db,c->argv[1]);
+t_set.c:341:    signalModifiedKey(c->db,c->argv[2]);
+t_set.c:347:        dbAdd(c->db,c->argv[2],dstset);
+t_set.c:353:        notifyKeyspaceEvent(REDIS_NOTIFY_SET,"sadd",c->argv[2],c->db->id);
+t_set.c:361:    if ((set = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
+t_set.c:364:    c->argv[2] = tryObjectEncoding(c->argv[2]);
+t_set.c:365:    if (setTypeIsMember(set,c->argv[2]))
+t_set.c:374:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
+t_set.c:385:    if ((set = lookupKeyWriteOrReply(c,c->argv[1],shared.nullbulk)) == NULL ||
+t_set.c:396:    notifyKeyspaceEvent(REDIS_NOTIFY_SET,"spop",c->argv[1],c->db->id);
+t_set.c:400:    rewriteClientCommandVector(c,3,aux,c->argv[1],ele);
+t_set.c:406:        dbDelete(c->db,c->argv[1]);
+t_set.c:407:        notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",c->argv[1],c->db->id);
+t_set.c:409:    signalModifiedKey(c->db,c->argv[1]);
+t_set.c:431:    if (getLongFromObjectOrReply(c,c->argv[2],&l,NULL) != REDIS_OK) return;
+t_set.c:441:    if ((set = lookupKeyReadOrReply(c,c->argv[1],shared.emptymultibulk))
+t_set.c:472:        sunionDiffGenericCommand(c,c->argv+1,1,NULL,REDIS_OP_UNION);
+t_set.c:559:    if (c->argc == 3) {
+t_set.c:562:    } else if (c->argc > 3) {
+t_set.c:567:    if ((set = lookupKeyReadOrReply(c,c->argv[1],shared.nullbulk)) == NULL ||
+t_set.c:601:            lookupKeyWrite(c->db,setkeys[j]) :
+t_set.c:602:            lookupKeyRead(c->db,setkeys[j]);
+t_set.c:606:                if (dbDelete(c->db,dstkey)) {
+t_set.c:607:                    signalModifiedKey(c->db,dstkey);
+t_set.c:704:        int deleted = dbDelete(c->db,dstkey);
+t_set.c:706:            dbAdd(c->db,dstkey,dstset);
+t_set.c:709:                dstkey,c->db->id);
+t_set.c:715:                    dstkey,c->db->id);
+t_set.c:717:        signalModifiedKey(c->db,dstkey);
+t_set.c:726:    sinterGenericCommand(c,c->argv+1,c->argc-1,NULL);
+t_set.c:730:    sinterGenericCommand(c,c->argv+2,c->argc-2,c->argv[1]);
+t_set.c:746:            lookupKeyWrite(c->db,setkeys[j]) :
+t_set.c:747:            lookupKeyRead(c->db,setkeys[j]);
+t_set.c:875:        int deleted = dbDelete(c->db,dstkey);
+t_set.c:877:            dbAdd(c->db,dstkey,dstset);
+t_set.c:881:                dstkey,c->db->id);
+t_set.c:887:                    dstkey,c->db->id);
+t_set.c:889:        signalModifiedKey(c->db,dstkey);
+t_set.c:896:    sunionDiffGenericCommand(c,c->argv+1,c->argc-1,NULL,REDIS_OP_UNION);
+t_set.c:900:    sunionDiffGenericCommand(c,c->argv+2,c->argc-2,c->argv[1],REDIS_OP_UNION);
+t_set.c:904:    sunionDiffGenericCommand(c,c->argv+1,c->argc-1,NULL,REDIS_OP_DIFF);
+t_set.c:908:    sunionDiffGenericCommand(c,c->argv+2,c->argc-2,c->argv[1],REDIS_OP_DIFF);
+t_set.c:915:    if (parseScanCursorOrReply(c,c->argv[2],&cursor) == REDIS_ERR) return;
+t_set.c:916:    if ((set = lookupKeyReadOrReply(c,c->argv[1],shared.emptyscan)) == NULL ||
+t_string.c:72:            addReplyErrorFormat(c,"invalid expire time in %s",c->cmd->name);
+t_string.c:78:    if ((flags & REDIS_SET_NX && lookupKeyWrite(c->db,key) != NULL) ||
+t_string.c:79:        (flags & REDIS_SET_XX && lookupKeyWrite(c->db,key) == NULL))
+t_string.c:84:    setKey(c->db,key,val);
+t_string.c:86:    if (expire) setExpire(c->db,key,mstime()+milliseconds);
+t_string.c:87:    notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"set",key,c->db->id);
+t_string.c:89:        "expire",key,c->db->id);
+t_string.c:100:    for (j = 3; j < c->argc; j++) {
+t_string.c:101:        char *a = c->argv[j]->ptr;
+t_string.c:102:        robj *next = (j == c->argc-1) ? NULL : c->argv[j+1];
+t_string.c:126:    c->argv[2] = tryObjectEncoding(c->argv[2]);
+t_string.c:127:    setGenericCommand(c,flags,c->argv[1],c->argv[2],expire,unit,NULL,NULL);
+t_string.c:131:    c->argv[2] = tryObjectEncoding(c->argv[2]);
+t_string.c:132:    setGenericCommand(c,REDIS_SET_NX,c->argv[1],c->argv[2],NULL,0,shared.cone,shared.czero);
+t_string.c:136:    c->argv[3] = tryObjectEncoding(c->argv[3]);
+t_string.c:137:    setGenericCommand(c,REDIS_SET_NO_FLAGS,c->argv[1],c->argv[3],c->argv[2],UNIT_SECONDS,NULL,NULL);
+t_string.c:141:    c->argv[3] = tryObjectEncoding(c->argv[3]);
+t_string.c:142:    setGenericCommand(c,REDIS_SET_NO_FLAGS,c->argv[1],c->argv[3],c->argv[2],UNIT_MILLISECONDS,NULL,NULL);
+t_string.c:148:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.nullbulk)) == NULL)
+t_string.c:166:    c->argv[2] = tryObjectEncoding(c->argv[2]);
+t_string.c:167:    setKey(c->db,c->argv[1],c->argv[2]);
+t_string.c:168:    notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"set",c->argv[1],c->db->id);
+t_string.c:175:    sds value = c->argv[3]->ptr;
+t_string.c:177:    if (getLongFromObjectOrReply(c,c->argv[2],&offset,NULL) != REDIS_OK)
+t_string.c:185:    o = lookupKeyWrite(c->db,c->argv[1]);
+t_string.c:198:        dbAdd(c->db,c->argv[1],o);
+t_string.c:218:        o = dbUnshareStringValue(c->db,c->argv[1],o);
+t_string.c:224:        signalModifiedKey(c->db,c->argv[1]);
+t_string.c:226:            "setrange",c->argv[1],c->db->id);
+t_string.c:238:    if (getLongLongFromObjectOrReply(c,c->argv[2],&start,NULL) != REDIS_OK)
+t_string.c:240:    if (getLongLongFromObjectOrReply(c,c->argv[3],&end,NULL) != REDIS_OK)
+t_string.c:242:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.emptybulk)) == NULL ||
+t_string.c:272:    addReplyMultiBulkLen(c,c->argc-1);
+t_string.c:273:    for (j = 1; j < c->argc; j++) {
+t_string.c:274:        robj *o = lookupKeyRead(c->db,c->argv[j]);
+t_string.c:290:    if ((c->argc % 2) == 0) {
+t_string.c:297:        for (j = 1; j < c->argc; j += 2) {
+t_string.c:298:            if (lookupKeyWrite(c->db,c->argv[j]) != NULL) {
+t_string.c:308:    for (j = 1; j < c->argc; j += 2) {
+t_string.c:309:        c->argv[j+1] = tryObjectEncoding(c->argv[j+1]);
+t_string.c:310:        setKey(c->db,c->argv[j],c->argv[j+1]);
+t_string.c:311:        notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"set",c->argv[j],c->db->id);
+t_string.c:313:    server.dirty += (c->argc-1)/2;
+t_string.c:329:    o = lookupKeyWrite(c->db,c->argv[1]);
+t_string.c:350:            dbOverwrite(c->db,c->argv[1],new);
+t_string.c:352:            dbAdd(c->db,c->argv[1],new);
+t_string.c:355:    signalModifiedKey(c->db,c->argv[1]);
+t_string.c:356:    notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"incrby",c->argv[1],c->db->id);
+t_string.c:374:    if (getLongLongFromObjectOrReply(c, c->argv[2], &incr, NULL) != REDIS_OK) return;
+t_string.c:381:    if (getLongLongFromObjectOrReply(c, c->argv[2], &incr, NULL) != REDIS_OK) return;
+t_string.c:389:    o = lookupKeyWrite(c->db,c->argv[1]);
+t_string.c:392:        getLongDoubleFromObjectOrReply(c,c->argv[2],&incr,NULL) != REDIS_OK)
+t_string.c:402:        dbOverwrite(c->db,c->argv[1],new);
+t_string.c:404:        dbAdd(c->db,c->argv[1],new);
+t_string.c:405:    signalModifiedKey(c->db,c->argv[1]);
+t_string.c:406:    notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"incrbyfloat",c->argv[1],c->db->id);
+t_string.c:423:    o = lookupKeyWrite(c->db,c->argv[1]);
+t_string.c:426:        c->argv[2] = tryObjectEncoding(c->argv[2]);
+t_string.c:427:        dbAdd(c->db,c->argv[1],c->argv[2]);
+t_string.c:428:        incrRefCount(c->argv[2]);
+t_string.c:429:        totlen = stringObjectLen(c->argv[2]);
+t_string.c:436:        append = c->argv[2];
+t_string.c:442:        o = dbUnshareStringValue(c->db,c->argv[1],o);
+t_string.c:446:    signalModifiedKey(c->db,c->argv[1]);
+t_string.c:447:    notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"append",c->argv[1],c->db->id);
+t_string.c:454:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
+t_zset.c:213:    return spec->minex ? (value > spec->min) : (value >= spec->min);
+t_zset.c:217:    return spec->maxex ? (value < spec->max) : (value <= spec->max);
+t_zset.c:432:    spec->minex = spec->maxex = 0;
+t_zset.c:439:        spec->min = (long)min->ptr;
+t_zset.c:442:            spec->min = strtod((char*)min->ptr+1,&eptr);
+t_zset.c:443:            if (eptr[0] != '\0' || isnan(spec->min)) return REDIS_ERR;
+t_zset.c:444:            spec->minex = 1;
+t_zset.c:446:            spec->min = strtod((char*)min->ptr,&eptr);
+t_zset.c:447:            if (eptr[0] != '\0' || isnan(spec->min)) return REDIS_ERR;
+t_zset.c:451:        spec->max = (long)max->ptr;
+t_zset.c:454:            spec->max = strtod((char*)max->ptr+1,&eptr);
+t_zset.c:455:            if (eptr[0] != '\0' || isnan(spec->max)) return REDIS_ERR;
+t_zset.c:456:            spec->maxex = 1;
+t_zset.c:458:            spec->max = strtod((char*)max->ptr,&eptr);
+t_zset.c:459:            if (eptr[0] != '\0' || isnan(spec->max)) return REDIS_ERR;
+t_zset.c:521:    spec->min = spec->max = NULL;
+t_zset.c:522:    if (zslParseLexRangeItem(min, &spec->min, &spec->minex) == REDIS_ERR ||
+t_zset.c:523:        zslParseLexRangeItem(max, &spec->max, &spec->maxex) == REDIS_ERR) {
+t_zset.c:524:        if (spec->min) decrRefCount(spec->min);
+t_zset.c:525:        if (spec->max) decrRefCount(spec->max);
+t_zset.c:535:    decrRefCount(spec->min);
+t_zset.c:536:    decrRefCount(spec->max);
+t_zset.c:551:    return spec->minex ?
+t_zset.c:552:        (compareStringObjectsForLexRange(value,spec->min) > 0) :
+t_zset.c:553:        (compareStringObjectsForLexRange(value,spec->min) >= 0);
+t_zset.c:557:    return spec->maxex ?
+t_zset.c:558:        (compareStringObjectsForLexRange(value,spec->max) < 0) :
+t_zset.c:559:        (compareStringObjectsForLexRange(value,spec->max) <= 0);
+t_zset.c:1181:    robj *key = c->argv[1];
+t_zset.c:1199:    while(scoreidx < c->argc) {
+t_zset.c:1200:        char *opt = c->argv[scoreidx]->ptr;
+t_zset.c:1217:    elements = c->argc-scoreidx;
+t_zset.c:1242:        if (getDoubleFromObjectOrReply(c,c->argv[scoreidx+j*2],&scores[j],NULL)
+t_zset.c:1247:    zobj = lookupKeyWrite(c->db,key);
+t_zset.c:1251:            server.zset_max_ziplist_value < sdslen(c->argv[scoreidx+1]->ptr))
+t_zset.c:1257:        dbAdd(c->db,key,zobj);
+t_zset.c:1272:            ele = c->argv[scoreidx+1+j*2];
+t_zset.c:1308:            ele = c->argv[scoreidx+1+j*2] =
+t_zset.c:1309:                tryObjectEncoding(c->argv[scoreidx+1+j*2]);
+t_zset.c:1365:        signalModifiedKey(c->db,key);
+t_zset.c:1367:            incr ? "zincr" : "zadd", key, c->db->id);
+t_zset.c:1380:    robj *key = c->argv[1];
+t_zset.c:1390:        for (j = 2; j < c->argc; j++) {
+t_zset.c:1391:            if ((eptr = zzlFind(zobj->ptr,c->argv[j],NULL)) != NULL) {
+t_zset.c:1395:                    dbDelete(c->db,key);
+t_zset.c:1406:        for (j = 2; j < c->argc; j++) {
+t_zset.c:1407:            de = dictFind(zs->dict,c->argv[j]);
+t_zset.c:1413:                redisAssertWithInfo(c,c->argv[j],zslDelete(zs->zsl,score,c->argv[j]));
+t_zset.c:1416:                dictDelete(zs->dict,c->argv[j]);
+t_zset.c:1419:                    dbDelete(c->db,key);
+t_zset.c:1430:        notifyKeyspaceEvent(REDIS_NOTIFY_ZSET,"zrem",key,c->db->id);
+t_zset.c:1432:            notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",key,c->db->id);
+t_zset.c:1433:        signalModifiedKey(c->db,key);
+t_zset.c:1444:    robj *key = c->argv[1];
+t_zset.c:1454:        if ((getLongFromObjectOrReply(c,c->argv[2],&start,NULL) != REDIS_OK) ||
+t_zset.c:1455:            (getLongFromObjectOrReply(c,c->argv[3],&end,NULL) != REDIS_OK))
+t_zset.c:1458:        if (zslParseRange(c->argv[2],c->argv[3],&range) != REDIS_OK) {
+t_zset.c:1463:        if (zslParseLexRange(c->argv[2],c->argv[3],&lexrange) != REDIS_OK) {
+t_zset.c:1503:            dbDelete(c->db,key);
+t_zset.c:1521:            dbDelete(c->db,key);
+t_zset.c:1531:        signalModifiedKey(c->db,key);
+t_zset.c:1532:        notifyKeyspaceEvent(REDIS_NOTIFY_ZSET,event[rangetype],key,c->db->id);
+t_zset.c:1534:            notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",key,c->db->id);
+t_zset.c:1919:    if ((getLongFromObjectOrReply(c, c->argv[2], &setnum, NULL) != REDIS_OK))
+t_zset.c:1929:    if (setnum > c->argc-3) {
+t_zset.c:1937:        robj *obj = lookupKeyWrite(c->db,c->argv[j]);
+t_zset.c:1957:    if (j < c->argc) {
+t_zset.c:1958:        int remaining = c->argc - j;
+t_zset.c:1961:            if (remaining >= (setnum + 1) && !strcasecmp(c->argv[j]->ptr,"weights")) {
+t_zset.c:1964:                    if (getDoubleFromObjectOrReply(c,c->argv[j],&src[i].weight,
+t_zset.c:1971:            } else if (remaining >= 2 && !strcasecmp(c->argv[j]->ptr,"aggregate")) {
+t_zset.c:1973:                if (!strcasecmp(c->argv[j]->ptr,"sum")) {
+t_zset.c:1975:                } else if (!strcasecmp(c->argv[j]->ptr,"min")) {
+t_zset.c:1977:                } else if (!strcasecmp(c->argv[j]->ptr,"max")) {
+t_zset.c:2119:    if (dbDelete(c->db,dstkey)) {
+t_zset.c:2120:        signalModifiedKey(c->db,dstkey);
+t_zset.c:2130:        dbAdd(c->db,dstkey,dstobj);
+t_zset.c:2132:        if (!touched) signalModifiedKey(c->db,dstkey);
+t_zset.c:2135:            dstkey,c->db->id);
+t_zset.c:2141:            notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,"del",dstkey,c->db->id);
+t_zset.c:2147:    zunionInterGenericCommand(c,c->argv[1], REDIS_OP_UNION);
+t_zset.c:2151:    zunionInterGenericCommand(c,c->argv[1], REDIS_OP_INTER);
+t_zset.c:2155:    robj *key = c->argv[1];
+t_zset.c:2163:    if ((getLongFromObjectOrReply(c, c->argv[2], &start, NULL) != REDIS_OK) ||
+t_zset.c:2164:        (getLongFromObjectOrReply(c, c->argv[3], &end, NULL) != REDIS_OK)) return;
+t_zset.c:2166:    if (c->argc == 5 && !strcasecmp(c->argv[4]->ptr,"withscores")) {
+t_zset.c:2168:    } else if (c->argc >= 5) {
+t_zset.c:2267:    robj *key = c->argv[1];
+t_zset.c:2284:    if (zslParseRange(c->argv[minidx],c->argv[maxidx],&range) != REDIS_OK) {
+t_zset.c:2291:    if (c->argc > 4) {
+t_zset.c:2292:        int remaining = c->argc - 4;
+t_zset.c:2296:            if (remaining >= 1 && !strcasecmp(c->argv[pos]->ptr,"withscores")) {
+t_zset.c:2299:            } else if (remaining >= 3 && !strcasecmp(c->argv[pos]->ptr,"limit")) {
+t_zset.c:2300:                if ((getLongFromObjectOrReply(c, c->argv[pos+1], &offset, NULL) != REDIS_OK) ||
+t_zset.c:2301:                    (getLongFromObjectOrReply(c, c->argv[pos+2], &limit, NULL) != REDIS_OK)) return;
+t_zset.c:2460:    robj *key = c->argv[1];
+t_zset.c:2466:    if (zslParseRange(c->argv[2],c->argv[3],&range) != REDIS_OK) {
+t_zset.c:2537:    robj *key = c->argv[1];
+t_zset.c:2543:    if (zslParseLexRange(c->argv[2],c->argv[3],&range) != REDIS_OK) {
+t_zset.c:2618:    robj *key = c->argv[1];
+t_zset.c:2634:    if (zslParseLexRange(c->argv[minidx],c->argv[maxidx],&range) != REDIS_OK) {
+t_zset.c:2641:    if (c->argc > 4) {
+t_zset.c:2642:        int remaining = c->argc - 4;
+t_zset.c:2646:            if (remaining >= 3 && !strcasecmp(c->argv[pos]->ptr,"limit")) {
+t_zset.c:2647:                if ((getLongFromObjectOrReply(c, c->argv[pos+1], &offset, NULL) != REDIS_OK) ||
+t_zset.c:2648:                    (getLongFromObjectOrReply(c, c->argv[pos+2], &limit, NULL) != REDIS_OK)) return;
+t_zset.c:2801:    robj *key = c->argv[1];
+t_zset.c:2811:    robj *key = c->argv[1];
+t_zset.c:2819:        if (zzlFind(zobj->ptr,c->argv[2],&score) != NULL)
+t_zset.c:2827:        c->argv[2] = tryObjectEncoding(c->argv[2]);
+t_zset.c:2828:        de = dictFind(zs->dict,c->argv[2]);
+t_zset.c:2841:    robj *key = c->argv[1];
+t_zset.c:2842:    robj *ele = c->argv[2];
+t_zset.c:2884:        ele = c->argv[2] = tryObjectEncoding(c->argv[2]);
+t_zset.c:2914:    if (parseScanCursorOrReply(c,c->argv[2],&cursor) == REDIS_ERR) return;
+t_zset.c:2915:    if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.emptyscan)) == NULL ||
+zmalloc.h:39:#define ZMALLOC_LIB ("tcmalloc-" __xstr(TC_VERSION_MAJOR) "." __xstr(TC_VERSION_MINOR))
+zmalloc.h:49:#define ZMALLOC_LIB ("jemalloc-" __xstr(JEMALLOC_VERSION_MAJOR) "." __xstr(JEMALLOC_VERSION_MINOR) "." __xstr(JEMALLOC_VERSION_BUGFIX))
