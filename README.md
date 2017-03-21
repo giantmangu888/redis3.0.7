@@ -7,11 +7,11 @@ the updates as follows:
 1 process title
 When start a redis,the process as follows:
 
-before update:
+before update:   
  dba       2154      1  0 00:23 ?        00:00:00 /usr/local/redis30/bin/redis-server *:6380
  Under this scene,we do not know the directory of he redis.
   
- after update:
+ after update:   
  dba      18107     1  0 Mar14 ?        00:03:48 redis-server   /data1/redis6910/redis6910.cnf
  Obviously,it prints the absolute directory of the redis conf,which is convenient to operate the redis.
   
