@@ -16,21 +16,21 @@ before update:
  Obviously,it prints the absolute directory of the redis conf,which is convenient to operate the redis.
   
   2 Do not modify requirepass & masterauth  by sentinel
-  before update:
+  before update:   
   When start redis with sentinels and the master failovers:
   the sentinel will modify the redis.conf,which includes the variables above.In this case,the redis is risky.
   
-  after update:
+  after update:   
   when the master failovers,the sentinel will modify the redis.conf,which excludes the variables above.
   
   
-  3 load data online
+  3 load data online   
   The redis does not support to load data online originally
   after update,it can load data online,which includes aof file and rdb file.
   
-  127.0.0.1:6910> ? loadaof
+  127.0.0.1:6910> ? loadaof   
   
-    LOADAOF aof filename
+    LOADAOF aof filename   
     summary: load aof file online(add by @guweitao)
     since: 3.0.7
     group: server
