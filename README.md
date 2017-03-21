@@ -2,10 +2,18 @@
   redis-3.0.7 updates
 
   This is redis-3.0.7 source code,which is updated by guweitao
-  the updates as follows:
-  1 process title
-  When start a redis,the process as follows:
-  before update:
+
+
+the updates as follows:
+
+
+1 process title
+
+
+When start a redis,the process as follows:
+
+
+before update:
   dba       2154      1  0 00:23 ?        00:00:00 /usr/local/redis30/bin/redis-server *:6380
   Under this scene,we do not know the directory of he redis.
   
