@@ -35,16 +35,16 @@ before update:
     since: 3.0.7
     group: server
   
-  127.0.0.1:6910> ? loadrdb
+  127.0.0.1:6910> ? loadrdb   
   
-    LOADRDB rdb filename
-    summary: load rdb file online,which can not repeat!!!(add by @guweitao)
-    since: 3.0.7
-    group: server
+    LOADRDB rdb filename   
+    summary: load rdb file online,which can not repeat!!!(add by @guweitao)   
+    since: 3.0.7   
+    group: server   
   
   
-  For details,Please view the readme file of the code.
+  For details,Please view the readme file of the code.   
   
-  contact us:
-  qq:422186266
-  email:422186266@qq.com 
+  contact us:   
+  qq:422186266   
+  email:422186266@qq.com    
